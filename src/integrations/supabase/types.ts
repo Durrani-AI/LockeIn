@@ -14,7 +14,143 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      communication_profiles: {
+        Row: {
+          confidence: number
+          created_at: string
+          detail_level: number
+          directness: number
+          energy: number
+          formality: number
+          updated_at: string
+          user_id: string
+          values_text: string | null
+          voice_summary: string | null
+          warmth: number
+        }
+        Insert: {
+          confidence: number
+          created_at?: string
+          detail_level: number
+          directness: number
+          energy: number
+          formality: number
+          updated_at?: string
+          user_id: string
+          values_text?: string | null
+          voice_summary?: string | null
+          warmth: number
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          detail_level?: number
+          directness?: number
+          energy?: number
+          formality?: number
+          updated_at?: string
+          user_id?: string
+          values_text?: string | null
+          voice_summary?: string | null
+          warmth?: number
+        }
+        Relationships: []
+      }
+      cover_letters: {
+        Row: {
+          company: string
+          content: string
+          created_at: string
+          cv_id: string | null
+          id: string
+          job_description: string
+          job_title: string
+          match_analysis: Json | null
+          user_id: string
+        }
+        Insert: {
+          company: string
+          content: string
+          created_at?: string
+          cv_id?: string | null
+          id?: string
+          job_description: string
+          job_title: string
+          match_analysis?: Json | null
+          user_id: string
+        }
+        Update: {
+          company?: string
+          content?: string
+          created_at?: string
+          cv_id?: string | null
+          id?: string
+          job_description?: string
+          job_title?: string
+          match_analysis?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cover_letters_cv_id_fkey"
+            columns: ["cv_id"]
+            isOneToOne: false
+            referencedRelation: "cvs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cvs: {
+        Row: {
+          created_at: string
+          extracted_text: string | null
+          id: string
+          original_filename: string
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          extracted_text?: string | null
+          id?: string
+          original_filename: string
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          extracted_text?: string | null
+          id?: string
+          original_filename?: string
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
