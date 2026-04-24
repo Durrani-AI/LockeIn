@@ -9,13 +9,19 @@ export const Route = createFileRoute("/_authenticated")({
   component: AuthLayout,
 });
 
-const NAV = [
+type NavItem = {
+  to: "/app" | "/app/cv" | "/app/voice" | "/app/generate" | "/app/history";
+  label: string;
+  icon: typeof Sparkles;
+  exact?: boolean;
+};
+const NAV: NavItem[] = [
   { to: "/app", label: "Overview", icon: Sparkles, exact: true },
   { to: "/app/cv", label: "Your CV", icon: FileText },
   { to: "/app/voice", label: "Voice profile", icon: Brain },
   { to: "/app/generate", label: "Generate letter", icon: PenLine },
   { to: "/app/history", label: "History", icon: History },
-] as const;
+];
 
 function AuthLayout() {
   const { user, loading, signOut } = useAuth();
