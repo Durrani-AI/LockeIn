@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, redirect, Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
 import { useEffect } from "react";
 import { Sparkles, FileText, Brain, PenLine, History, LogOut, Loader2 } from "lucide-react";

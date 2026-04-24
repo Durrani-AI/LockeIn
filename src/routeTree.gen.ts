@@ -13,6 +13,8 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated.app.index'
+import { Route as AuthenticatedAppVoiceRouteImport } from './routes/_authenticated.app.voice'
+import { Route as AuthenticatedAppCvRouteImport } from './routes/_authenticated.app.cv'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -33,15 +35,29 @@ const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   path: '/app/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAppVoiceRoute = AuthenticatedAppVoiceRouteImport.update({
+  id: '/app/voice',
+  path: '/app/voice',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAppCvRoute = AuthenticatedAppCvRouteImport.update({
+  id: '/app/cv',
+  path: '/app/cv',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/app/cv': typeof AuthenticatedAppCvRoute
+  '/app/voice': typeof AuthenticatedAppVoiceRoute
   '/app/': typeof AuthenticatedAppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/app/cv': typeof AuthenticatedAppCvRoute
+  '/app/voice': typeof AuthenticatedAppVoiceRoute
   '/app': typeof AuthenticatedAppIndexRoute
 }
 export interface FileRoutesById {
@@ -49,14 +65,23 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/app/cv': typeof AuthenticatedAppCvRoute
+  '/_authenticated/app/voice': typeof AuthenticatedAppVoiceRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/app/'
+  fullPaths: '/' | '/auth' | '/app/cv' | '/app/voice' | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/app'
-  id: '__root__' | '/' | '/_authenticated' | '/auth' | '/_authenticated/app/'
+  to: '/' | '/auth' | '/app/cv' | '/app/voice' | '/app'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/app/cv'
+    | '/_authenticated/app/voice'
+    | '/_authenticated/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -95,14 +120,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/app/voice': {
+      id: '/_authenticated/app/voice'
+      path: '/app/voice'
+      fullPath: '/app/voice'
+      preLoaderRoute: typeof AuthenticatedAppVoiceRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/app/cv': {
+      id: '/_authenticated/app/cv'
+      path: '/app/cv'
+      fullPath: '/app/cv'
+      preLoaderRoute: typeof AuthenticatedAppCvRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAppCvRoute: typeof AuthenticatedAppCvRoute
+  AuthenticatedAppVoiceRoute: typeof AuthenticatedAppVoiceRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAppCvRoute: AuthenticatedAppCvRoute,
+  AuthenticatedAppVoiceRoute: AuthenticatedAppVoiceRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
 }
 
@@ -118,3 +161,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
