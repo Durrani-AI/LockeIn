@@ -232,7 +232,7 @@ function JobDetailPage() {
                 {savedRow ? <BookmarkCheck className="mr-2 h-4 w-4" /> : <Bookmark className="mr-2 h-4 w-4" />}
                 {savedRow ? "Saved" : "Save"}
               </Button>
-              <Select value={savedRow?.status ?? ""} onValueChange={(v) => setStatus(v as Status)}>
+              <Select value={savedRow?.status ?? undefined} onValueChange={(v) => setStatus(v as Status)}>
                 <SelectTrigger className="w-[170px]"><SelectValue placeholder="Set status" /></SelectTrigger>
                 <SelectContent>
                   {STATUSES.map((s) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
