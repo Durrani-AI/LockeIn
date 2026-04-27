@@ -3,6 +3,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useEffect } from "react";
 import { Sparkles, FileText, Brain, Briefcase, Bookmark, History, LogOut, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LockedInLogo } from "@/components/lockedin-logo";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -48,9 +49,9 @@ function AuthLayout() {
       <div className="mx-auto flex max-w-7xl gap-8 px-4 py-6 lg:px-8">
         {/* Sidebar */}
         <aside className="hidden w-60 shrink-0 lg:block">
-          <Link to="/" className="mb-8 flex items-center gap-2 px-2 font-display text-lg font-semibold">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground text-background">
-              <Sparkles className="h-4 w-4" />
+          <Link to="/" className="group mb-8 flex items-center gap-2.5 px-2 font-display text-lg font-semibold">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-border-strong bg-surface transition-colors group-hover:border-primary/60">
+              <LockedInLogo className="h-6 w-6" animated />
             </span>
             LockedIn
           </Link>
@@ -98,8 +99,8 @@ function AuthLayout() {
         {/* Mobile top nav */}
         <header className="fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b border-border bg-background/90 px-4 py-3 backdrop-blur lg:hidden">
           <Link to="/" className="flex items-center gap-2 font-display font-semibold">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-foreground text-background">
-              <Sparkles className="h-3.5 w-3.5" />
+            <span className="flex h-8 w-8 items-center justify-center rounded-md border border-border-strong bg-surface">
+              <LockedInLogo className="h-5 w-5" />
             </span>
             LockedIn
           </Link>
