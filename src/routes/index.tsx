@@ -4,6 +4,22 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Briefcase, Target, PenLine, Check, Bookmark, TrendingUp } from "lucide-react";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Tailor — Internship & Graduate Application Tracker" },
+      {
+        name: "description",
+        content:
+          "Track internships, vacation schemes, and graduate roles in finance, tech, and law. AI tailors your CV and cover letter to every job.",
+      },
+      { property: "og:title", content: "Tailor — Internship & Graduate Application Tracker" },
+      {
+        property: "og:description",
+        content:
+          "Browse curated internships and graduate roles. Save jobs, track status, and tailor every application with AI.",
+      },
+    ],
+  }),
   component: Landing,
 });
 
