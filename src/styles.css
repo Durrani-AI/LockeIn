@@ -42,53 +42,55 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  --shadow-soft: 0 1px 2px oklch(0.45 0.05 256 / 0.04), 0 8px 24px oklch(0.45 0.05 256 / 0.06);
-  --shadow-glow: 0 8px 32px oklch(0.55 0.18 254 / 0.18);
+  --shadow-soft: 0 1px 2px oklch(0 0 0 / 0.5), 0 8px 24px oklch(0 0 0 / 0.45);
+  --shadow-glow: 0 8px 32px oklch(0.62 0.17 152 / 0.28);
 }
 
+/* LockedIn — black + green theme. Single mode (dark by default). */
 :root {
   --radius: 0.75rem;
 
-  /* Cloud White palette */
-  --background: oklch(0.992 0.002 247);   /* #fafbfc */
-  --surface: oklch(0.965 0.005 247);      /* #e8ecf1 cool tint */
-  --surface-elevated: oklch(1 0 0);
-  --foreground: oklch(0.18 0.025 260);    /* deep slate */
+  /* Pure black base, layered surfaces */
+  --background: oklch(0.10 0.005 160);     /* near-black with faint green undertone */
+  --surface: oklch(0.15 0.008 160);
+  --surface-elevated: oklch(0.18 0.01 160);
+  --foreground: oklch(0.97 0.01 150);      /* off-white with a green hint */
 
-  --card: oklch(1 0 0);
+  --card: oklch(0.14 0.008 160);
   --card-foreground: var(--foreground);
-  --popover: oklch(1 0 0);
+  --popover: oklch(0.16 0.01 160);
   --popover-foreground: var(--foreground);
 
-  --primary: oklch(0.58 0.2 254);         /* #3b82f6 */
-  --primary-foreground: oklch(1 0 0);
-  --primary-soft: oklch(0.95 0.04 254);
+  /* Dark green primary */
+  --primary: oklch(0.62 0.17 152);         /* deep emerald */
+  --primary-foreground: oklch(0.10 0.02 160);
+  --primary-soft: oklch(0.28 0.08 152);
 
-  --secondary: oklch(0.965 0.008 247);
-  --secondary-foreground: oklch(0.25 0.03 260);
+  --secondary: oklch(0.20 0.012 160);
+  --secondary-foreground: var(--foreground);
 
-  --muted: oklch(0.965 0.005 247);
-  --muted-foreground: oklch(0.55 0.025 256); /* #94a3b8 */
+  --muted: oklch(0.20 0.01 160);
+  --muted-foreground: oklch(0.68 0.02 152);
 
-  --accent: oklch(0.95 0.04 254);
-  --accent-foreground: oklch(0.4 0.18 254);
+  --accent: oklch(0.30 0.10 152);
+  --accent-foreground: oklch(0.92 0.12 152);
 
   --destructive: oklch(0.6 0.22 25);
   --destructive-foreground: oklch(1 0 0);
-  --success: oklch(0.65 0.16 155);
-  --success-foreground: oklch(1 0 0);
+  --success: oklch(0.7 0.18 152);
+  --success-foreground: oklch(0.10 0.02 160);
   --warning: oklch(0.78 0.15 75);
 
-  --border: oklch(0.92 0.008 256);
-  --border-strong: oklch(0.85 0.012 256);
-  --input: oklch(0.92 0.008 256);
-  --ring: oklch(0.58 0.2 254);
+  --border: oklch(1 0 0 / 10%);
+  --border-strong: oklch(0.62 0.17 152 / 35%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.62 0.17 152);
 
-  --chart-1: oklch(0.58 0.2 254);
-  --chart-2: oklch(0.65 0.16 155);
-  --chart-3: oklch(0.78 0.15 75);
-  --chart-4: oklch(0.6 0.22 25);
-  --chart-5: oklch(0.5 0.18 290);
+  --chart-1: oklch(0.62 0.17 152);
+  --chart-2: oklch(0.75 0.16 152);
+  --chart-3: oklch(0.50 0.14 152);
+  --chart-4: oklch(0.78 0.15 75);
+  --chart-5: oklch(0.6 0.22 25);
 
   --sidebar: var(--surface-elevated);
   --sidebar-foreground: var(--foreground);
@@ -100,34 +102,8 @@
   --sidebar-ring: var(--ring);
 }
 
-.dark {
-  --background: oklch(0.18 0.025 260);
-  --surface: oklch(0.22 0.03 260);
-  --surface-elevated: oklch(0.25 0.03 260);
-  --foreground: oklch(0.98 0.003 247);
-  --card: oklch(0.22 0.03 260);
-  --card-foreground: var(--foreground);
-  --popover: oklch(0.22 0.03 260);
-  --popover-foreground: var(--foreground);
-  --primary: oklch(0.7 0.18 254);
-  --primary-foreground: oklch(0.15 0.02 260);
-  --primary-soft: oklch(0.3 0.08 254);
-  --secondary: oklch(0.28 0.03 260);
-  --secondary-foreground: var(--foreground);
-  --muted: oklch(0.28 0.03 260);
-  --muted-foreground: oklch(0.7 0.025 256);
-  --accent: oklch(0.3 0.08 254);
-  --accent-foreground: oklch(0.85 0.1 254);
-  --destructive: oklch(0.65 0.22 25);
-  --destructive-foreground: oklch(1 0 0);
-  --success: oklch(0.7 0.16 155);
-  --success-foreground: oklch(0.15 0.02 260);
-  --warning: oklch(0.8 0.15 75);
-  --border: oklch(1 0 0 / 10%);
-  --border-strong: oklch(1 0 0 / 18%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.7 0.18 254);
-}
+/* .dark intentionally inherits :root — LockedIn is dark-only */
+.dark { color-scheme: dark; }
 
 @layer base {
   * { border-color: var(--color-border); }
@@ -151,7 +127,7 @@
   }
   .bg-radial-fade {
     background:
-      radial-gradient(ellipse 80% 60% at 50% 0%, oklch(0.58 0.2 254 / 0.08), transparent 70%),
-      radial-gradient(ellipse 60% 50% at 100% 100%, oklch(0.7 0.18 200 / 0.06), transparent 70%);
+      radial-gradient(ellipse 80% 60% at 50% 0%, oklch(0.62 0.17 152 / 0.18), transparent 70%),
+      radial-gradient(ellipse 60% 50% at 100% 100%, oklch(0.5 0.14 152 / 0.10), transparent 70%);
   }
 }

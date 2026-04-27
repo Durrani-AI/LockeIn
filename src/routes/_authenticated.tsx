@@ -52,7 +52,7 @@ function AuthLayout() {
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground text-background">
               <Sparkles className="h-4 w-4" />
             </span>
-            Tailor
+            LockedIn
           </Link>
 
           <nav className="space-y-1">
@@ -101,7 +101,7 @@ function AuthLayout() {
             <span className="flex h-7 w-7 items-center justify-center rounded-md bg-foreground text-background">
               <Sparkles className="h-3.5 w-3.5" />
             </span>
-            Tailor
+            LockedIn
           </Link>
           <Button variant="ghost" size="sm" onClick={async () => { await signOut(); navigate({ to: "/" }); }}>
             <LogOut className="h-4 w-4" />

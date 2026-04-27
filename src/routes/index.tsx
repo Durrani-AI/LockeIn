@@ -7,13 +7,13 @@ import { useAuth } from "@/lib/auth-context";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Tailor — Internship & Graduate Application Tracker" },
+      { title: "LockedIn — Internship & Graduate Application Tracker" },
       {
         name: "description",
         content:
           "Track internships, vacation schemes, and graduate roles in finance, tech, and law. AI tailors your CV and cover letter to every job.",
       },
-      { property: "og:title", content: "Tailor — Internship & Graduate Application Tracker" },
+      { property: "og:title", content: "LockedIn — Internship & Graduate Application Tracker" },
       {
         property: "og:description",
         content:
@@ -156,7 +156,7 @@ function Landing() {
               </h2>
               <p className="mt-4 text-muted-foreground">
                 Most students juggle deadlines in Notion, CVs in Drive, and cover letters in
-                a chaotic Word folder. Tailor brings the listing, the tracker, and the AI
+                a chaotic Word folder. LockedIn brings the listing, the tracker, and the AI
                 writing into one place — every document tied to the role it was written for.
               </p>
             </div>
@@ -219,7 +219,7 @@ function Landing() {
       </section>
 
       <footer className="border-t border-border py-10 text-center text-sm text-muted-foreground">
-        Built with care · Tailor
+        Built with care · LockedIn
       </footer>
     </div>
   );
