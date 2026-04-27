@@ -21,22 +21,23 @@ function Landing() {
           <div className="mx-auto max-w-3xl text-center">
             <div className="inline-flex items-center gap-2 rounded-full border border-border-strong bg-surface-elevated px-3 py-1 text-xs font-medium text-muted-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-              Your personal application assistant
+              For students hunting internships & grad roles
             </div>
 
             <h1 className="mt-6 font-display text-5xl font-semibold tracking-tight text-foreground text-balance sm:text-6xl md:text-7xl">
-              Cover letters that actually <span className="text-primary">sound like you</span>.
+              Track every application. <span className="text-primary">Tailor every word.</span>
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground text-balance">
-              Upload your CV once. Paste a job description. Tailor reads both, understands your
-              communication style, and writes a cover letter in your voice — not a generic AI template.
+              Browse curated internships and graduate schemes in finance, tech, and law.
+              Save the ones that matter, track your progress, and let AI tailor your CV
+              and cover letter to each role — using the actual job description.
             </p>
 
             <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
               <Button asChild size="lg" className="h-12 px-6 text-base">
                 <Link to="/auth">
-                  Start tailoring <ArrowRight className="ml-2 h-4 w-4" />
+                  Browse jobs <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="h-12 px-6 text-base">
@@ -52,20 +53,24 @@ function Landing() {
             <div className="relative rounded-2xl border border-border-strong bg-surface-elevated p-2 shadow-soft">
               <div className="grid gap-2 rounded-xl bg-surface p-6 md:grid-cols-3">
                 {[
-                  { label: "CV", text: "5 years React. Shipped 12 products. Led team of 4.", tone: "primary" },
-                  { label: "Role", text: "Senior Frontend at Linear — needs DX obsession + craft.", tone: "muted" },
-                  { label: "You", text: "Direct. Considered. Conversational. Quietly confident.", tone: "success" },
+                  { label: "Goldman Sachs", text: "Summer Analyst — Investment Banking", tone: "Applying" },
+                  { label: "Linklaters", text: "Vacation Scheme — Corporate Law", tone: "Interviewing" },
+                  { label: "Stripe", text: "Software Engineering Intern", tone: "Saved" },
                 ].map((c) => (
                   <div key={c.label} className="rounded-lg border border-border bg-card p-4 text-left">
                     <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       {c.label}
                     </div>
                     <p className="mt-2 text-sm text-foreground">{c.text}</p>
+                    <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-primary">
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                      {c.tone}
+                    </div>
                   </div>
                 ))}
               </div>
               <div className="px-6 pt-4 pb-2 text-center text-xs text-muted-foreground">
-                ↓ Tailor synthesises all three into one letter ↓
+                ↓ Each role gets its own tailored CV & cover letter ↓
               </div>
             </div>
           </div>
@@ -77,33 +82,33 @@ function Landing() {
         <div className="mx-auto max-w-7xl px-6 py-24">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="font-display text-4xl font-semibold tracking-tight">
-              Three layers. One letter.
+              From job listing to submitted application.
             </h2>
             <p className="mt-4 text-muted-foreground">
-              Most cover letter tools use only a job description. Tailor uses three signals to
-              write something that's actually yours.
+              One workspace for finding roles, tracking deadlines, and crafting
+              applications that don't sound like everyone else's.
             </p>
           </div>
 
           <div className="mt-16 grid gap-6 md:grid-cols-3">
             {[
               {
-                icon: FileText,
+                icon: Briefcase,
                 step: "01",
-                title: "CV + JD analysis",
-                body: "Upload your CV once. Paste any job description. We surface the strongest matches and the gaps worth addressing.",
+                title: "Browse curated roles",
+                body: "Hand-picked internships, vacation schemes, and graduate programmes across finance, tech, law, and consulting — with deadlines you won't miss.",
               },
               {
-                icon: Brain,
+                icon: Bookmark,
                 step: "02",
-                title: "Communication profile",
-                body: "A short one-time questionnaire. Direct or detailed? Confident or considered? Stored once, used forever.",
+                title: "Save & track",
+                body: "Bookmark roles, set application status (Saved → Applying → Interviewing → Offer), and keep notes against each one.",
               },
               {
                 icon: PenLine,
                 step: "03",
-                title: "Tailored letter",
-                body: "Your CV + the role + your voice → one cover letter that reads like you wrote it on a focused afternoon.",
+                title: "Tailor with AI",
+                body: "From any job page: generate a cover letter or get CV edit suggestions tied to that exact JD — using your saved voice profile.",
               },
             ].map((f) => (
               <div
@@ -128,19 +133,21 @@ function Landing() {
           <div className="grid gap-12 md:grid-cols-2 md:gap-20">
             <div>
               <h2 className="font-display text-4xl font-semibold tracking-tight text-balance">
-                Not another generic cover letter generator.
+                Built for the spreadsheet you've been avoiding.
               </h2>
               <p className="mt-4 text-muted-foreground">
-                Recruiters can spot AI-generated letters in three lines. Tailor's whole point is
-                that the output sounds like a specific human — you, on a good day.
+                Most students juggle deadlines in Notion, CVs in Drive, and cover letters in
+                a chaotic Word folder. Tailor brings the listing, the tracker, and the AI
+                writing into one place — every document tied to the role it was written for.
               </p>
             </div>
             <ul className="space-y-4">
               {[
-                "Your communication profile is the secret ingredient",
-                "Match analysis tells you what to emphasise before writing",
-                "Every letter is saved — re-use, edit, iterate",
-                "Built for people who apply to lots of roles, fast",
+                "Curated listings across finance, tech, law & graduate schemes",
+                "Application status tracking with deadlines & notes",
+                "AI cover letters & CV suggestions tied to each specific role",
+                "Saved voice profile so every letter sounds like you",
+                "Re-open any past document linked to the original job",
               ].map((p) => (
                 <li key={p} className="flex items-start gap-3">
                   <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/15 text-success">
@@ -154,10 +161,34 @@ function Landing() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* Categories strip */}
       <section className="border-t border-border bg-surface/40">
+        <div className="mx-auto max-w-7xl px-6 py-20">
+          <div className="text-center">
+            <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <Target className="h-3.5 w-3.5" /> Categories we cover
+            </div>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              {["Finance", "Technology", "Law", "Consulting", "Graduate Schemes", "Engineering"].map((c) => (
+                <span
+                  key={c}
+                  className="rounded-full border border-border-strong bg-surface-elevated px-4 py-2 text-sm font-medium text-foreground"
+                >
+                  {c}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="border-t border-border">
         <div className="mx-auto max-w-4xl px-6 py-24 text-center">
-          <h2 className="font-display text-4xl font-semibold tracking-tight text-balance">
+          <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
+            <TrendingUp className="h-5 w-5" />
+          </div>
+          <h2 className="mt-6 font-display text-4xl font-semibold tracking-tight text-balance">
             Apply to ten roles in the time it used to take to tailor one.
           </h2>
           <Button asChild size="lg" className="mt-8 h-12 px-6 text-base">
