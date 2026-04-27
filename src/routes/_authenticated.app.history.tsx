@@ -17,6 +17,7 @@ interface Letter {
   company: string;
   content: string;
   created_at: string;
+  job_id: string | null;
 }
 
 function HistoryPage() {
@@ -30,7 +31,7 @@ function HistoryPage() {
     setLoading(true);
     const { data } = await supabase
       .from("cover_letters")
-      .select("id, job_title, company, content, created_at")
+      .select("id, job_title, company, content, created_at, job_id")
       .order("created_at", { ascending: false });
     setLetters(data ?? []);
     setLoading(false);
@@ -56,8 +57,8 @@ function HistoryPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl font-semibold tracking-tight">History</h1>
-        <p className="mt-1 text-muted-foreground">Every letter you've generated, saved.</p>
+        <h1 className="font-display text-3xl font-semibold tracking-tight">Documents</h1>
+        <p className="mt-1 text-muted-foreground">Cover letters you've generated, linked to the role they were written for.</p>
       </div>
 
       {loading ? (
