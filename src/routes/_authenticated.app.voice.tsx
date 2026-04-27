@@ -137,7 +137,7 @@ function VoicePage() {
       <div>
         <h1 className="font-display text-3xl font-semibold tracking-tight">Voice profile</h1>
         <p className="mt-1 text-muted-foreground">
-          Six sliders that teach Tailor how you communicate.
+          Six sliders that teach LockedIn how you communicate.
           {hasProfile && (
             <span className="ml-2 inline-flex items-center gap-1 text-success">
               <CheckCircle2 className="h-3.5 w-3.5" /> Saved

@@ -30,13 +30,13 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Tailor — Personalised cover letters that actually sound like you" },
+      { title: "LockedIn — Personalised cover letters that actually sound like you" },
       {
         name: "description",
         content:
           "Upload your CV, paste a job description, and get a tailored cover letter written in your own voice. Your personal application assistant.",
       },
-      { property: "og:title", content: "Tailor — Personalised cover letters in your voice" },
+      { property: "og:title", content: "LockedIn — Personalised cover letters in your voice" },
       {
         property: "og:description",
         content:

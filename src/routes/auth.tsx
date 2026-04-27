@@ -31,7 +31,7 @@ function AuthPage() {
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground text-background">
             <Sparkles className="h-4 w-4" />
           </span>
-          Tailor
+          LockedIn
         </Link>
 
         <div className="rounded-2xl border border-border-strong bg-card p-8 shadow-soft">
