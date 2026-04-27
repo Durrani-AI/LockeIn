@@ -93,10 +93,17 @@ function HistoryPage() {
                       </CardDescription>
                     </button>
                     <div className="flex gap-1">
-                      <Button size="sm" variant="ghost" onClick={() => copy(l.content)}>
+                      {l.job_id && (
+                        <Button size="sm" variant="ghost" asChild>
+                          <Link to="/app/jobs/$jobId" params={{ jobId: l.job_id }} title="Open job">
+                            <FileText className="h-3.5 w-3.5" />
+                          </Link>
+                        </Button>
+                      )}
+                      <Button size="sm" variant="ghost" onClick={() => copy(l.content)} title="Copy">
                         <Copy className="h-3.5 w-3.5" />
                       </Button>
-                      <Button size="sm" variant="ghost" onClick={() => remove(l.id)}>
+                      <Button size="sm" variant="ghost" onClick={() => remove(l.id)} title="Delete">
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
