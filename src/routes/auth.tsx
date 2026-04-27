@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { LockedInLogo } from "@/components/lockedin-logo";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
@@ -27,9 +28,9 @@ function AuthPage() {
       <div className="absolute inset-0 bg-radial-fade" />
 
       <div className="relative w-full max-w-md">
-        <Link to="/" className="mb-8 flex items-center justify-center gap-2 font-display text-lg font-semibold">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground text-background">
-            <Sparkles className="h-4 w-4" />
+        <Link to="/" className="group mb-8 flex items-center justify-center gap-2.5 font-display text-lg font-semibold">
+          <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-border-strong bg-surface transition-colors group-hover:border-primary/60">
+            <LockedInLogo className="h-7 w-7" animated />
           </span>
           LockedIn
         </Link>
