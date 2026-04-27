@@ -15,7 +15,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated.app.index'
 import { Route as AuthenticatedAppVoiceRouteImport } from './routes/_authenticated.app.voice'
 import { Route as AuthenticatedAppHistoryRouteImport } from './routes/_authenticated.app.history'
-import { Route as AuthenticatedAppGenerateRouteImport } from './routes/_authenticated.app.generate'
 import { Route as AuthenticatedAppCvRouteImport } from './routes/_authenticated.app.cv'
 
 const AuthRoute = AuthRouteImport.update({
@@ -47,12 +46,6 @@ const AuthenticatedAppHistoryRoute = AuthenticatedAppHistoryRouteImport.update({
   path: '/app/history',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedAppGenerateRoute =
-  AuthenticatedAppGenerateRouteImport.update({
-    id: '/app/generate',
-    path: '/app/generate',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
 const AuthenticatedAppCvRoute = AuthenticatedAppCvRouteImport.update({
   id: '/app/cv',
   path: '/app/cv',
@@ -63,7 +56,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app/cv': typeof AuthenticatedAppCvRoute
-  '/app/generate': typeof AuthenticatedAppGenerateRoute
   '/app/history': typeof AuthenticatedAppHistoryRoute
   '/app/voice': typeof AuthenticatedAppVoiceRoute
   '/app/': typeof AuthenticatedAppIndexRoute
@@ -72,7 +64,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app/cv': typeof AuthenticatedAppCvRoute
-  '/app/generate': typeof AuthenticatedAppGenerateRoute
   '/app/history': typeof AuthenticatedAppHistoryRoute
   '/app/voice': typeof AuthenticatedAppVoiceRoute
   '/app': typeof AuthenticatedAppIndexRoute
@@ -83,37 +74,21 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/app/cv': typeof AuthenticatedAppCvRoute
-  '/_authenticated/app/generate': typeof AuthenticatedAppGenerateRoute
   '/_authenticated/app/history': typeof AuthenticatedAppHistoryRoute
   '/_authenticated/app/voice': typeof AuthenticatedAppVoiceRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/auth'
-    | '/app/cv'
-    | '/app/generate'
-    | '/app/history'
-    | '/app/voice'
-    | '/app/'
+  fullPaths: '/' | '/auth' | '/app/cv' | '/app/history' | '/app/voice' | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/auth'
-    | '/app/cv'
-    | '/app/generate'
-    | '/app/history'
-    | '/app/voice'
-    | '/app'
+  to: '/' | '/auth' | '/app/cv' | '/app/history' | '/app/voice' | '/app'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/app/cv'
-    | '/_authenticated/app/generate'
     | '/_authenticated/app/history'
     | '/_authenticated/app/voice'
     | '/_authenticated/app/'
@@ -169,13 +144,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppHistoryRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/app/generate': {
-      id: '/_authenticated/app/generate'
-      path: '/app/generate'
-      fullPath: '/app/generate'
-      preLoaderRoute: typeof AuthenticatedAppGenerateRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/app/cv': {
       id: '/_authenticated/app/cv'
       path: '/app/cv'
@@ -188,7 +156,6 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAppCvRoute: typeof AuthenticatedAppCvRoute
-  AuthenticatedAppGenerateRoute: typeof AuthenticatedAppGenerateRoute
   AuthenticatedAppHistoryRoute: typeof AuthenticatedAppHistoryRoute
   AuthenticatedAppVoiceRoute: typeof AuthenticatedAppVoiceRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
@@ -196,7 +163,6 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAppCvRoute: AuthenticatedAppCvRoute,
-  AuthenticatedAppGenerateRoute: AuthenticatedAppGenerateRoute,
   AuthenticatedAppHistoryRoute: AuthenticatedAppHistoryRoute,
   AuthenticatedAppVoiceRoute: AuthenticatedAppVoiceRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,

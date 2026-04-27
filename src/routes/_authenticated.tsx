@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
 import { useEffect } from "react";
-import { Sparkles, FileText, Brain, PenLine, History, LogOut, Loader2 } from "lucide-react";
+import { Sparkles, FileText, Brain, Briefcase, Bookmark, History, LogOut, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -10,17 +10,18 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 type NavItem = {
-  to: "/app" | "/app/cv" | "/app/voice" | "/app/generate" | "/app/history";
+  to: "/app" | "/app/jobs" | "/app/saved" | "/app/cv" | "/app/voice" | "/app/history";
   label: string;
   icon: typeof Sparkles;
   exact?: boolean;
 };
 const NAV: NavItem[] = [
   { to: "/app", label: "Overview", icon: Sparkles, exact: true },
+  { to: "/app/jobs", label: "Browse jobs", icon: Briefcase },
+  { to: "/app/saved", label: "Saved & tracker", icon: Bookmark },
   { to: "/app/cv", label: "Your CV", icon: FileText },
   { to: "/app/voice", label: "Voice profile", icon: Brain },
-  { to: "/app/generate", label: "Generate letter", icon: PenLine },
-  { to: "/app/history", label: "History", icon: History },
+  { to: "/app/history", label: "Documents", icon: History },
 ];
 
 function AuthLayout() {
