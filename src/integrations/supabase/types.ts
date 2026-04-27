@@ -62,10 +62,13 @@ export type Database = {
           content: string
           created_at: string
           cv_id: string | null
+          extra_context: string | null
           id: string
           job_description: string
+          job_id: string | null
           job_title: string
           match_analysis: Json | null
+          tone_overrides: Json | null
           user_id: string
         }
         Insert: {
@@ -73,10 +76,13 @@ export type Database = {
           content: string
           created_at?: string
           cv_id?: string | null
+          extra_context?: string | null
           id?: string
           job_description: string
+          job_id?: string | null
           job_title: string
           match_analysis?: Json | null
+          tone_overrides?: Json | null
           user_id: string
         }
         Update: {
@@ -84,10 +90,13 @@ export type Database = {
           content?: string
           created_at?: string
           cv_id?: string | null
+          extra_context?: string | null
           id?: string
           job_description?: string
+          job_id?: string | null
           job_title?: string
           match_analysis?: Json | null
+          tone_overrides?: Json | null
           user_id?: string
         }
         Relationships: [
@@ -96,6 +105,63 @@ export type Database = {
             columns: ["cv_id"]
             isOneToOne: false
             referencedRelation: "cvs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cover_letters_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cv_advice: {
+        Row: {
+          created_at: string
+          cv_id: string
+          edits: Json
+          fit_score: number
+          gaps: Json
+          id: string
+          job_id: string
+          keywords_to_add: Json
+          strengths: Json
+          summary: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          cv_id: string
+          edits: Json
+          fit_score: number
+          gaps: Json
+          id?: string
+          job_id: string
+          keywords_to_add: Json
+          strengths: Json
+          summary: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          cv_id?: string
+          edits?: Json
+          fit_score?: number
+          gaps?: Json
+          id?: string
+          job_id?: string
+          keywords_to_add?: Json
+          strengths?: Json
+          summary?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cv_advice_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
             referencedColumns: ["id"]
           },
         ]
@@ -127,6 +193,54 @@ export type Database = {
         }
         Relationships: []
       }
+      jobs: {
+        Row: {
+          apply_url: string | null
+          category: Database["public"]["Enums"]["job_category"]
+          company: string
+          created_at: string
+          deadline: string | null
+          description: string
+          id: string
+          job_type: Database["public"]["Enums"]["job_type"]
+          location: string
+          requirements: string | null
+          role_title: string
+          salary: string | null
+          short_summary: string
+        }
+        Insert: {
+          apply_url?: string | null
+          category: Database["public"]["Enums"]["job_category"]
+          company: string
+          created_at?: string
+          deadline?: string | null
+          description: string
+          id?: string
+          job_type: Database["public"]["Enums"]["job_type"]
+          location: string
+          requirements?: string | null
+          role_title: string
+          salary?: string | null
+          short_summary: string
+        }
+        Update: {
+          apply_url?: string | null
+          category?: Database["public"]["Enums"]["job_category"]
+          company?: string
+          created_at?: string
+          deadline?: string | null
+          description?: string
+          id?: string
+          job_type?: Database["public"]["Enums"]["job_type"]
+          location?: string
+          requirements?: string | null
+          role_title?: string
+          salary?: string | null
+          short_summary?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -151,6 +265,44 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_jobs: {
+        Row: {
+          created_at: string
+          id: string
+          job_id: string
+          notes: string | null
+          status: Database["public"]["Enums"]["application_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          job_id: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["application_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          job_id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["application_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_jobs_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -159,7 +311,15 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      application_status:
+        | "saved"
+        | "applying"
+        | "applied"
+        | "interviewing"
+        | "offer"
+        | "rejected"
+      job_category: "finance" | "technology" | "law" | "graduate"
+      job_type: "internship" | "placement" | "graduate"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -286,6 +446,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      application_status: [
+        "saved",
+        "applying",
+        "applied",
+        "interviewing",
+        "offer",
+        "rejected",
+      ],
+      job_category: ["finance", "technology", "law", "graduate"],
+      job_type: ["internship", "placement", "graduate"],
+    },
   },
 } as const

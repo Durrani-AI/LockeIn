@@ -121,7 +121,7 @@ function VoicePage() {
     }
     toast.success("Voice profile saved");
     setHasProfile(true);
-    if (!hasProfile) navigate({ to: "/app/generate" });
+    if (!hasProfile) navigate({ to: "/app/jobs" });
   };
 
   if (loading) {

@@ -32,10 +32,10 @@ function Overview() {
   }, [user]);
 
   const steps = [
-    { title: "Upload your CV", done: hasCv, to: "/app/cv", icon: FileText },
-    { title: "Build your voice profile", done: hasProfile, to: "/app/voice", icon: Brain },
-    { title: "Generate your first letter", done: recentCount > 0, to: "/app/generate", icon: PenLine },
-  ] as const;
+    { title: "Upload your CV", done: hasCv, to: "/app/cv" as const, icon: FileText },
+    { title: "Build your voice profile", done: hasProfile, to: "/app/voice" as const, icon: Brain },
+    { title: "Browse & save your first jobs", done: recentCount > 0, to: "/app/jobs" as const, icon: PenLine },
+  ];
 
   const ready = hasCv && hasProfile;
 
@@ -90,14 +90,14 @@ function Overview() {
           <CardTitle>{ready ? "Ready when you are" : "Finish setup to start"}</CardTitle>
           <CardDescription>
             {ready
-              ? "Paste a job description, hit generate. ~10 seconds per letter."
+              ? "Browse curated internships, placements, and graduate schemes. Tailor your CV and cover letter inside any role."
               : "Upload a CV and complete the voice profile first."}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Button asChild disabled={!ready} size="lg">
-            <Link to="/app/generate">
-              Generate cover letter <ArrowRight className="ml-2 h-4 w-4" />
+            <Link to="/app/jobs">
+              Browse jobs <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
         </CardContent>
