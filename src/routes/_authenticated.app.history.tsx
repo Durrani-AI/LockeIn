@@ -70,7 +70,7 @@ function HistoryPage() {
             </div>
             <div className="font-medium">No letters yet</div>
             <p className="text-sm text-muted-foreground">Generate your first one.</p>
-            <Button asChild className="mt-2"><Link to="/app/generate">Generate letter</Link></Button>
+            <Button asChild className="mt-2"><Link to="/app/jobs">Browse jobs</Link></Button>
           </CardContent>
         </Card>
       ) : (
