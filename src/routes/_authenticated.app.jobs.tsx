@@ -1,99 +1,236 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Briefcase, MapPin, Calendar, Loader2, Search } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Loader2, ChevronDown, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/app/jobs")({
   component: JobsPage,
 });
 
+type Category = "finance" | "technology" | "law" | "graduate";
+type JobType = "internship" | "placement" | "graduate";
+
 interface JobRow {
   id: string;
   company: string;
   role_title: string;
-  category: "finance" | "technology" | "law" | "graduate";
-  job_type: "internship" | "placement" | "graduate";
+  category: Category;
+  job_type: JobType;
   location: string;
   deadline: string | null;
+  created_at: string;
   short_summary: string;
+  requirements: string | null;
 }
 
-const CATEGORIES = [
-  { key: "all", label: "All" },
-  { key: "finance", label: "Finance" },
-  { key: "technology", label: "Technology" },
-  { key: "law", label: "Law" },
+interface SavedRow {
+  job_id: string;
+  status: string | null;
+}
+
+const TYPE_TABS: { key: "all" | JobType; label: string }[] = [
+  { key: "all", label: "All Roles" },
+  { key: "internship", label: "Summer Internships" },
+  { key: "placement", label: "Industrial Placements" },
   { key: "graduate", label: "Graduate Schemes" },
+];
+
+const CATEGORY_LABELS: Record<Category, string> = {
+  finance: "Finance & Banking",
+  technology: "Technology & Engineering",
+  law: "Law & Consulting",
+  graduate: "General Graduate",
+};
+
+const STATUS_OPTIONS = [
+  "Not Applied",
+  "Saved",
+  "Application Submitted",
+  "Interviewing",
+  "Offer",
+  "Rejected",
 ] as const;
+
+function statusClass(status: string | null | undefined) {
+  switch (status) {
+    case "Application Submitted":
+      return "text-emerald-400";
+    case "Interviewing":
+      return "text-amber-400";
+    case "Offer":
+      return "text-emerald-300";
+    case "Rejected":
+      return "text-rose-400";
+    case "Saved":
+      return "text-sky-400";
+    default:
+      return "text-rose-400/80 italic";
+  }
+}
+
+function formatDate(d: string | null) {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "2-digit",
+  });
+}
+
+function deadlineClass(d: string | null) {
+  if (!d) return "text-muted-foreground";
+  const days = (new Date(d).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+  if (days < 0) return "text-muted-foreground line-through";
+  if (days < 14) return "text-amber-400 font-medium";
+  return "text-foreground";
+}
 
 function JobsPage() {
   const { user } = useAuth();
   const [jobs, setJobs] = useState<JobRow[]>([]);
+  const [saved, setSaved] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [cat, setCat] = useState<typeof CATEGORIES[number]["key"]>("all");
+  const [tab, setTab] = useState<(typeof TYPE_TABS)[number]["key"]>("all");
   const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!user) return;
     (async () => {
       setLoading(true);
-      const { data } = await supabase
-        .from("jobs")
-        .select("id, company, role_title, category, job_type, location, deadline, short_summary")
-        .order("deadline", { ascending: true, nullsFirst: false });
-      setJobs((data ?? []) as JobRow[]);
+      const [jobsRes, savedRes] = await Promise.all([
+        supabase
+          .from("jobs")
+          .select(
+            "id, company, role_title, category, job_type, location, deadline, created_at, short_summary, requirements",
+          )
+          .order("deadline", { ascending: true, nullsFirst: false }),
+        supabase.from("saved_jobs").select("job_id, status").eq("user_id", user.id),
+      ]);
+      setJobs((jobsRes.data ?? []) as JobRow[]);
+      const map: Record<string, string> = {};
+      ((savedRes.data ?? []) as SavedRow[]).forEach((r) => {
+        if (r.status) map[r.job_id] = r.status;
+      });
+      setSaved(map);
       setLoading(false);
     })();
   }, [user]);
 
-  const filtered = jobs.filter((j) => {
-    if (cat !== "all" && j.category !== cat) return false;
-    if (q.trim()) {
-      const s = q.toLowerCase();
-      return j.company.toLowerCase().includes(s) || j.role_title.toLowerCase().includes(s);
-    }
-    return true;
-  });
+  const filtered = useMemo(() => {
+    return jobs.filter((j) => {
+      if (tab !== "all" && j.job_type !== tab) return false;
+      if (q.trim()) {
+        const s = q.toLowerCase();
+        if (
+          !j.company.toLowerCase().includes(s) &&
+          !j.role_title.toLowerCase().includes(s)
+        )
+          return false;
+      }
+      if (statusFilter !== "all") {
+        const s = saved[j.id] ?? "Not Applied";
+        if (s !== statusFilter) return false;
+      }
+      return true;
+    });
+  }, [jobs, tab, q, statusFilter, saved]);
+
+  const grouped = useMemo(() => {
+    const groups: Record<Category, JobRow[]> = {
+      finance: [],
+      technology: [],
+      law: [],
+      graduate: [],
+    };
+    filtered.forEach((j) => groups[j.category].push(j));
+    return groups;
+  }, [filtered]);
+
+  const toggle = (cat: Category) =>
+    setCollapsed((c) => ({ ...c, [cat]: !c[cat] }));
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl font-semibold tracking-tight">Browse jobs</h1>
+        <h1 className="font-display text-3xl font-semibold tracking-tight">
+          Application Tracker
+        </h1>
         <p className="mt-1 text-muted-foreground">
-          Curated internships, placements, and graduate schemes. Save what interests you, then tailor your CV and cover letter inside each role.
+          Curated internships, placements, and graduate schemes. Click any
+          programme to view full details and tailor your CV or cover letter.
         </p>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      {/* Tabs */}
+      <div className="flex flex-wrap gap-2">
+        {TYPE_TABS.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setTab(t.key)}
+            className={cn(
+              "rounded-full border px-4 py-1.5 text-xs font-medium transition-colors",
+              tab === t.key
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-card text-muted-foreground hover:border-border-strong hover:text-foreground",
+            )}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">
+            Search
+          </label>
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search company or role…"
-            className="pl-9"
           />
         </div>
-        <div className="flex flex-wrap gap-2">
-          {CATEGORIES.map((c) => (
-            <button
-              key={c.key}
-              type="button"
-              onClick={() => setCat(c.key)}
-              className={
-                "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors " +
-                (cat === c.key
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-card text-muted-foreground hover:border-border-strong hover:text-foreground")
-              }
-            >
-              {c.label}
-            </button>
-          ))}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">
+            Filter by My Status
+          </label>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">No filters applied</SelectItem>
+              {STATUS_OPTIONS.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5 flex flex-col justify-end">
+          <p className="text-xs text-muted-foreground">
+            Showing{" "}
+            <span className="font-semibold text-foreground">
+              {filtered.length}
+            </span>{" "}
+            of {jobs.length} roles
+          </p>
         </div>
       </div>
 
@@ -102,42 +239,154 @@ function JobsPage() {
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         </div>
       ) : filtered.length === 0 ? (
-        <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">No jobs match.</CardContent></Card>
+        <Card>
+          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+            No roles match your filters.
+          </CardContent>
+        </Card>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2">
-          {filtered.map((j) => (
-            <Link
-              key={j.id}
-              to="/app/jobs/$jobId"
-              params={{ jobId: j.id }}
-              className="group rounded-xl border border-border bg-card p-5 transition-all hover:border-border-strong hover:shadow-soft"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Briefcase className="h-3 w-3" />
-                    {j.company}
-                  </div>
-                  <h3 className="mt-1 truncate font-display text-base font-semibold group-hover:text-primary">
-                    {j.role_title}
-                  </h3>
-                </div>
-                <Badge variant="outline" className="shrink-0 capitalize">{j.job_type}</Badge>
-              </div>
-              <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{j.short_summary}</p>
-              <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{j.location}</span>
-                {j.deadline && (
-                  <span className="inline-flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />Apply by {new Date(j.deadline).toLocaleDateString()}
-                  </span>
-                )}
-                <Badge variant="secondary" className="capitalize">{j.category}</Badge>
-              </div>
-            </Link>
-          ))}
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-soft">
+          <div className="max-h-[70vh] overflow-auto">
+            <table className="w-full min-w-[900px] border-collapse text-sm">
+              <thead className="sticky top-0 z-10 bg-secondary text-xs uppercase tracking-wide text-muted-foreground">
+                <tr className="border-b border-border">
+                  <th className="px-3 py-3 text-left font-semibold w-[160px]">
+                    My Status
+                  </th>
+                  <th className="px-3 py-3 text-left font-semibold w-[180px]">
+                    Company
+                  </th>
+                  <th className="px-3 py-3 text-left font-semibold">
+                    Programme Name
+                  </th>
+                  <th className="px-3 py-3 text-left font-semibold w-[110px]">
+                    Opening
+                  </th>
+                  <th className="px-3 py-3 text-left font-semibold w-[110px]">
+                    Closing
+                  </th>
+                  <th className="px-3 py-3 text-center font-semibold w-[60px]">
+                    CV
+                  </th>
+                  <th className="px-3 py-3 text-center font-semibold w-[110px]">
+                    Cover Letter
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {(Object.keys(grouped) as Category[]).map((cat) => {
+                  const rows = grouped[cat];
+                  if (rows.length === 0) return null;
+                  const isCollapsed = collapsed[cat];
+                  return (
+                    <FragmentGroup
+                      key={cat}
+                      cat={cat}
+                      rows={rows}
+                      collapsed={!!isCollapsed}
+                      onToggle={() => toggle(cat)}
+                      saved={saved}
+                    />
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
+  );
+}
+
+function FragmentGroup({
+  cat,
+  rows,
+  collapsed,
+  onToggle,
+  saved,
+}: {
+  cat: Category;
+  rows: JobRow[];
+  collapsed: boolean;
+  onToggle: () => void;
+  saved: Record<string, string>;
+}) {
+  return (
+    <>
+      <tr className="bg-muted/40">
+        <td colSpan={7} className="px-3 py-2">
+          <button
+            type="button"
+            onClick={onToggle}
+            className="flex items-center gap-2 text-left text-xs font-semibold uppercase tracking-wider text-foreground/90 hover:text-primary"
+          >
+            {collapsed ? (
+              <ChevronRight className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5" />
+            )}
+            {CATEGORY_LABELS[cat]}
+            <span className="ml-1 text-muted-foreground font-normal normal-case tracking-normal">
+              ({rows.length})
+            </span>
+          </button>
+        </td>
+      </tr>
+      {!collapsed &&
+        rows.map((j) => {
+          const status = saved[j.id] ?? "Not Applied";
+          const reqs = (j.requirements ?? "").toLowerCase();
+          const needsCover = !reqs.includes("no cover letter");
+          return (
+            <tr
+              key={j.id}
+              className="group border-b border-border/50 transition-colors hover:bg-muted/30"
+            >
+              <td className={cn("px-3 py-2.5 text-xs", statusClass(status))}>
+                {status}
+              </td>
+              <td className="px-3 py-2.5">
+                <Link
+                  to="/app/jobs/$jobId"
+                  params={{ jobId: j.id }}
+                  className="font-medium text-primary hover:underline"
+                >
+                  {j.company}
+                </Link>
+                <div className="text-[11px] text-muted-foreground">
+                  {j.location}
+                </div>
+              </td>
+              <td className="px-3 py-2.5">
+                <Link
+                  to="/app/jobs/$jobId"
+                  params={{ jobId: j.id }}
+                  className="text-foreground hover:text-primary hover:underline"
+                >
+                  {j.role_title}
+                </Link>
+              </td>
+              <td className="px-3 py-2.5 text-xs text-muted-foreground">
+                {formatDate(j.created_at)}
+              </td>
+              <td className={cn("px-3 py-2.5 text-xs", deadlineClass(j.deadline))}>
+                {formatDate(j.deadline)}
+              </td>
+              <td className="px-3 py-2.5 text-center text-xs text-emerald-400">
+                Yes
+              </td>
+              <td className="px-3 py-2.5 text-center text-xs">
+                <span
+                  className={
+                    needsCover ? "text-emerald-400" : "text-muted-foreground"
+                  }
+                >
+                  {needsCover ? "Yes" : "Optional"}
+                </span>
+              </td>
+            </tr>
+          );
+        })}
+    </>
   );
 }
