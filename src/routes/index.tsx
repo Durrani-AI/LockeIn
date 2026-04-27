@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteNav } from "@/components/site-nav";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Briefcase, Target, PenLine, Check, Bookmark, TrendingUp, FileText } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -24,6 +25,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
+  const { user } = useAuth();
+  const ctaTo = user ? "/app/jobs" : "/auth";
   return (
     <div className="min-h-screen bg-background">
       <SiteNav />
@@ -52,7 +55,7 @@ function Landing() {
 
             <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
               <Button asChild size="lg" className="h-12 px-6 text-base">
-                <Link to="/auth">
+                <Link to={ctaTo}>
                   Browse jobs <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
@@ -208,8 +211,8 @@ function Landing() {
             Apply to ten roles in the time it used to take to tailor one.
           </h2>
           <Button asChild size="lg" className="mt-8 h-12 px-6 text-base">
-            <Link to="/auth">
-              Get started free <ArrowRight className="ml-2 h-4 w-4" />
+            <Link to={ctaTo}>
+              {user ? "Browse jobs" : "Get started free"} <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
         </div>

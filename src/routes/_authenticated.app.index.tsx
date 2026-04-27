@@ -95,11 +95,19 @@ function Overview() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button asChild disabled={!ready} size="lg">
-            <Link to="/app/jobs">
-              Browse jobs <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+          {ready ? (
+            <Button asChild size="lg">
+              <Link to="/app/jobs">
+                Browse jobs <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          ) : (
+            <Button asChild size="lg" variant="outline">
+              <Link to={!hasCv ? "/app/cv" : "/app/voice"}>
+                {!hasCv ? "Upload your CV" : "Build voice profile"} <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          )}
         </CardContent>
       </Card>
 
