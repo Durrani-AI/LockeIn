@@ -14,8 +14,11 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated.app.index'
 import { Route as AuthenticatedAppVoiceRouteImport } from './routes/_authenticated.app.voice'
+import { Route as AuthenticatedAppSavedRouteImport } from './routes/_authenticated.app.saved'
+import { Route as AuthenticatedAppJobsRouteImport } from './routes/_authenticated.app.jobs'
 import { Route as AuthenticatedAppHistoryRouteImport } from './routes/_authenticated.app.history'
 import { Route as AuthenticatedAppCvRouteImport } from './routes/_authenticated.app.cv'
+import { Route as AuthenticatedAppJobsJobIdRouteImport } from './routes/_authenticated.app.jobs.$jobId'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -41,6 +44,16 @@ const AuthenticatedAppVoiceRoute = AuthenticatedAppVoiceRouteImport.update({
   path: '/app/voice',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAppSavedRoute = AuthenticatedAppSavedRouteImport.update({
+  id: '/app/saved',
+  path: '/app/saved',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAppJobsRoute = AuthenticatedAppJobsRouteImport.update({
+  id: '/app/jobs',
+  path: '/app/jobs',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAppHistoryRoute = AuthenticatedAppHistoryRouteImport.update({
   id: '/app/history',
   path: '/app/history',
@@ -51,22 +64,34 @@ const AuthenticatedAppCvRoute = AuthenticatedAppCvRouteImport.update({
   path: '/app/cv',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAppJobsJobIdRoute =
+  AuthenticatedAppJobsJobIdRouteImport.update({
+    id: '/$jobId',
+    path: '/$jobId',
+    getParentRoute: () => AuthenticatedAppJobsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app/cv': typeof AuthenticatedAppCvRoute
   '/app/history': typeof AuthenticatedAppHistoryRoute
+  '/app/jobs': typeof AuthenticatedAppJobsRouteWithChildren
+  '/app/saved': typeof AuthenticatedAppSavedRoute
   '/app/voice': typeof AuthenticatedAppVoiceRoute
   '/app/': typeof AuthenticatedAppIndexRoute
+  '/app/jobs/$jobId': typeof AuthenticatedAppJobsJobIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app/cv': typeof AuthenticatedAppCvRoute
   '/app/history': typeof AuthenticatedAppHistoryRoute
+  '/app/jobs': typeof AuthenticatedAppJobsRouteWithChildren
+  '/app/saved': typeof AuthenticatedAppSavedRoute
   '/app/voice': typeof AuthenticatedAppVoiceRoute
   '/app': typeof AuthenticatedAppIndexRoute
+  '/app/jobs/$jobId': typeof AuthenticatedAppJobsJobIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -75,14 +100,35 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/app/cv': typeof AuthenticatedAppCvRoute
   '/_authenticated/app/history': typeof AuthenticatedAppHistoryRoute
+  '/_authenticated/app/jobs': typeof AuthenticatedAppJobsRouteWithChildren
+  '/_authenticated/app/saved': typeof AuthenticatedAppSavedRoute
   '/_authenticated/app/voice': typeof AuthenticatedAppVoiceRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/app/jobs/$jobId': typeof AuthenticatedAppJobsJobIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/app/cv' | '/app/history' | '/app/voice' | '/app/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/app/cv'
+    | '/app/history'
+    | '/app/jobs'
+    | '/app/saved'
+    | '/app/voice'
+    | '/app/'
+    | '/app/jobs/$jobId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/app/cv' | '/app/history' | '/app/voice' | '/app'
+  to:
+    | '/'
+    | '/auth'
+    | '/app/cv'
+    | '/app/history'
+    | '/app/jobs'
+    | '/app/saved'
+    | '/app/voice'
+    | '/app'
+    | '/app/jobs/$jobId'
   id:
     | '__root__'
     | '/'
@@ -90,8 +136,11 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/app/cv'
     | '/_authenticated/app/history'
+    | '/_authenticated/app/jobs'
+    | '/_authenticated/app/saved'
     | '/_authenticated/app/voice'
     | '/_authenticated/app/'
+    | '/_authenticated/app/jobs/$jobId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -137,6 +186,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppVoiceRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/app/saved': {
+      id: '/_authenticated/app/saved'
+      path: '/app/saved'
+      fullPath: '/app/saved'
+      preLoaderRoute: typeof AuthenticatedAppSavedRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/app/jobs': {
+      id: '/_authenticated/app/jobs'
+      path: '/app/jobs'
+      fullPath: '/app/jobs'
+      preLoaderRoute: typeof AuthenticatedAppJobsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/app/history': {
       id: '/_authenticated/app/history'
       path: '/app/history'
@@ -151,12 +214,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppCvRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/app/jobs/$jobId': {
+      id: '/_authenticated/app/jobs/$jobId'
+      path: '/$jobId'
+      fullPath: '/app/jobs/$jobId'
+      preLoaderRoute: typeof AuthenticatedAppJobsJobIdRouteImport
+      parentRoute: typeof AuthenticatedAppJobsRoute
+    }
   }
 }
+
+interface AuthenticatedAppJobsRouteChildren {
+  AuthenticatedAppJobsJobIdRoute: typeof AuthenticatedAppJobsJobIdRoute
+}
+
+const AuthenticatedAppJobsRouteChildren: AuthenticatedAppJobsRouteChildren = {
+  AuthenticatedAppJobsJobIdRoute: AuthenticatedAppJobsJobIdRoute,
+}
+
+const AuthenticatedAppJobsRouteWithChildren =
+  AuthenticatedAppJobsRoute._addFileChildren(AuthenticatedAppJobsRouteChildren)
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAppCvRoute: typeof AuthenticatedAppCvRoute
   AuthenticatedAppHistoryRoute: typeof AuthenticatedAppHistoryRoute
+  AuthenticatedAppJobsRoute: typeof AuthenticatedAppJobsRouteWithChildren
+  AuthenticatedAppSavedRoute: typeof AuthenticatedAppSavedRoute
   AuthenticatedAppVoiceRoute: typeof AuthenticatedAppVoiceRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
 }
@@ -164,6 +247,8 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAppCvRoute: AuthenticatedAppCvRoute,
   AuthenticatedAppHistoryRoute: AuthenticatedAppHistoryRoute,
+  AuthenticatedAppJobsRoute: AuthenticatedAppJobsRouteWithChildren,
+  AuthenticatedAppSavedRoute: AuthenticatedAppSavedRoute,
   AuthenticatedAppVoiceRoute: AuthenticatedAppVoiceRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
 }
