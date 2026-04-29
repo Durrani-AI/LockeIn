@@ -6,8 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Upload, FileText, Loader2, Trash2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { useServerFn } from "@tanstack/react-start";
-import { extractCvText } from "@/lib/server/ai.functions";
+import { extractCvTextApi } from "@/lib/api/ai-client";
 
 export const Route = createFileRoute("/_authenticated/app/cv")({
   component: CvPage,
@@ -28,7 +27,6 @@ function CvPage() {
   const [uploading, setUploading] = useState(false);
   const [parsing, setParsing] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-  const extract = useServerFn(extractCvText);
 
   const refresh = async () => {
     if (!user) return;
@@ -87,7 +85,7 @@ function CvPage() {
       toast.success("CV uploaded — extracting text…");
 
       setParsing(true);
-      const { length } = await extract({ data: { cvId: row.id } });
+      const { length } = await extractCvTextApi(row.id);
       toast.success(`Parsed ${length.toLocaleString()} characters`);
       await refresh();
     } catch (e) {

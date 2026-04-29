@@ -16,8 +16,11 @@ import {
   Loader2, Sparkles, Wand2, Copy, Download, AlertCircle, CheckCircle2, ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useServerFn } from "@tanstack/react-start";
-import { analyseCvForJob, generateCoverLetter } from "@/lib/server/ai.functions";
+import {
+  analyseCvForJobApi,
+  generateCoverLetterApi,
+  type CvAdvice,
+} from "@/lib/api/ai-client";
 
 export const Route = createFileRoute("/_authenticated/app/jobs/$jobId")({
   component: JobDetailPage,
@@ -38,15 +41,6 @@ interface Job {
   salary: string | null;
 }
 
-interface CvAdvice {
-  fit_score: number;
-  summary: string;
-  strengths: { point: string; evidence: string }[];
-  gaps: { point: string; severity: string; how_to_address: string }[];
-  edits: { location: string; current: string; suggested: string; why: string }[];
-  keywords_to_add: string[];
-}
-
 const STATUSES = ["saved", "applying", "applied", "interviewing", "offer", "rejected"] as const;
 type Status = typeof STATUSES[number];
 
@@ -62,8 +56,6 @@ const TONE_KEYS = [
 function JobDetailPage() {
   const { jobId } = Route.useParams();
   const { user } = useAuth();
-  const analyse = useServerFn(analyseCvForJob);
-  const generate = useServerFn(generateCoverLetter);
 
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
@@ -157,8 +149,8 @@ function JobDetailPage() {
     setAnalysing(true);
     setAdvice(null);
     try {
-      const { advice } = await analyse({ data: { jobId } });
-      setAdvice(advice as CvAdvice);
+      const result = await analyseCvForJobApi(jobId);
+      setAdvice(result.advice);
       toast.success("CV advice ready");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Analysis failed");
@@ -179,12 +171,10 @@ function JobDetailPage() {
           if (toneOverrides[k] !== profile[k]) overrides[k] = toneOverrides[k];
         }
       }
-      const { content } = await generate({
-        data: {
-          jobId,
-          toneOverrides: Object.keys(overrides).length ? overrides : undefined,
-          extraContext: extraContext.trim() || undefined,
-        },
+      const { content } = await generateCoverLetterApi({
+        jobId,
+        toneOverrides: Object.keys(overrides).length ? overrides : undefined,
+        extraContext: extraContext.trim() || undefined,
       });
       setLetter(content);
       toast.success("Cover letter ready — saved to Documents");
