@@ -1,4 +1,5 @@
 from functools import lru_cache
+import json
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -15,7 +16,6 @@ class Settings(BaseSettings):
 
     supabase_url: str = Field(alias="SUPABASE_URL")
     supabase_publishable_key: str = Field(alias="SUPABASE_PUBLISHABLE_KEY")
-    supabase_service_role_key: str | None = Field(default=None, alias="SUPABASE_SERVICE_ROLE_KEY")
 
     groq_api_key: str | None = Field(default=None, alias="GROQ_API_KEY")
     groq_model: str = Field(default="llama-3.3-70b-versatile", alias="GROQ_MODEL")
@@ -23,6 +23,13 @@ class Settings(BaseSettings):
         default="sentence-transformers/all-MiniLM-L6-v2",
         alias="SENTENCE_TRANSFORMER_MODEL",
     )
+
+    auth_cookie_name: str = Field(default="lockedin_access_token", alias="APP_AUTH_COOKIE_NAME")
+    csrf_cookie_name: str = Field(default="lockedin_csrf_token", alias="APP_CSRF_COOKIE_NAME")
+    auth_cookie_secure: bool = Field(default=False, alias="APP_AUTH_COOKIE_SECURE")
+    auth_cookie_samesite: str = Field(default="lax", alias="APP_AUTH_COOKIE_SAMESITE")
+    auth_cookie_domain: str | None = Field(default=None, alias="APP_AUTH_COOKIE_DOMAIN")
+    auth_cookie_max_age_seconds: int = Field(default=3600, alias="APP_AUTH_COOKIE_MAX_AGE_SECONDS")
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -35,10 +42,30 @@ class Settings(BaseSettings):
     @classmethod
     def parse_allowed_origins(cls, value: object) -> list[str]:
         if isinstance(value, str):
-            return [item.strip() for item in value.split(",") if item.strip()]
+            raw = value.strip()
+            if not raw:
+                return []
+
+            if raw.startswith("["):
+                try:
+                    parsed = json.loads(raw)
+                except json.JSONDecodeError:
+                    parsed = None
+                if isinstance(parsed, list):
+                    return [str(item).strip() for item in parsed if str(item).strip()]
+
+            return [item.strip() for item in raw.split(",") if item.strip()]
         if isinstance(value, list):
             return [str(item) for item in value]
         return []
+
+    @field_validator("auth_cookie_samesite", mode="before")
+    @classmethod
+    def parse_cookie_samesite(cls, value: object) -> str:
+        parsed = str(value).strip().lower() if value is not None else "lax"
+        if parsed not in {"lax", "strict", "none"}:
+            return "lax"
+        return parsed
 
 
 @lru_cache

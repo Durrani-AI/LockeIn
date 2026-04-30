@@ -9,6 +9,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
 
+from app.core.sanitization import sanitize_text
 from app.models.schemas import CvAdvice
 
 
@@ -125,6 +126,7 @@ CANDIDATE CV
         )
 
         payload = self._extract_json(raw)
+        payload = self._sanitize_advice_payload(payload)
         payload["fit_score"] = self._normalize_fit_score(payload.get("fit_score"), fallback=fit_score)
         return CvAdvice.model_validate(payload)
 
@@ -205,10 +207,71 @@ ADDITIONAL CONTEXT
             }
         )
 
-        content = raw.strip()
+        content = sanitize_text(raw, max_length=12_000)
         if not content:
             raise ValueError("AI returned no letter")
         return content
+
+    @staticmethod
+    def _sanitize_advice_payload(payload: dict[str, Any]) -> dict[str, Any]:
+        strengths = payload.get("strengths") if isinstance(payload.get("strengths"), list) else []
+        gaps = payload.get("gaps") if isinstance(payload.get("gaps"), list) else []
+        edits = payload.get("edits") if isinstance(payload.get("edits"), list) else []
+        keywords = payload.get("keywords_to_add") if isinstance(payload.get("keywords_to_add"), list) else []
+
+        cleaned_strengths: list[dict[str, str]] = []
+        for item in strengths:
+            if not isinstance(item, dict):
+                continue
+            cleaned_strengths.append(
+                {
+                    "point": sanitize_text(item.get("point"), max_length=240, preserve_newlines=False) or "",
+                    "evidence": sanitize_text(item.get("evidence"), max_length=600) or "",
+                }
+            )
+
+        cleaned_gaps: list[dict[str, str]] = []
+        for item in gaps:
+            if not isinstance(item, dict):
+                continue
+            severity = str(item.get("severity") or "medium").strip().lower()
+            if severity not in {"low", "medium", "high"}:
+                severity = "medium"
+            cleaned_gaps.append(
+                {
+                    "point": sanitize_text(item.get("point"), max_length=240, preserve_newlines=False) or "",
+                    "severity": severity,
+                    "how_to_address": sanitize_text(item.get("how_to_address"), max_length=800) or "",
+                }
+            )
+
+        cleaned_edits: list[dict[str, str]] = []
+        for item in edits:
+            if not isinstance(item, dict):
+                continue
+            cleaned_edits.append(
+                {
+                    "location": sanitize_text(item.get("location"), max_length=180, preserve_newlines=False) or "",
+                    "current": sanitize_text(item.get("current"), max_length=1000) or "",
+                    "suggested": sanitize_text(item.get("suggested"), max_length=1000) or "",
+                    "why": sanitize_text(item.get("why"), max_length=800) or "",
+                }
+            )
+
+        cleaned_keywords: list[str] = []
+        for keyword in keywords:
+            cleaned_keyword = sanitize_text(keyword, max_length=120, preserve_newlines=False)
+            if cleaned_keyword:
+                cleaned_keywords.append(cleaned_keyword)
+
+        return {
+            "fit_score": payload.get("fit_score"),
+            "summary": sanitize_text(payload.get("summary"), max_length=1200) or "",
+            "strengths": cleaned_strengths,
+            "gaps": cleaned_gaps,
+            "edits": cleaned_edits,
+            "keywords_to_add": cleaned_keywords,
+        }
 
     @staticmethod
     def _extract_json(raw_text: str) -> dict[str, Any]:

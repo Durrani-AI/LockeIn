@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { sanitizePlainText } from "@/lib/security/sanitize";
 
 export const Route = createFileRoute("/_authenticated/app/voice")({
   component: VoicePage,
@@ -106,11 +107,13 @@ function VoicePage() {
   const save = async () => {
     if (!user) return;
     setSaving(true);
+    const safeValuesText = sanitizePlainText(valuesText, 2000);
+    const safeVoiceSummary = sanitizePlainText(voiceSummary, 2000);
     const payload = {
       user_id: user.id,
       ...answers,
-      values_text: valuesText.trim() || null,
-      voice_summary: voiceSummary.trim() || null,
+      values_text: safeValuesText || null,
+      voice_summary: safeVoiceSummary || null,
       updated_at: new Date().toISOString(),
     };
     const { error } = await supabase.from("communication_profiles").upsert(payload, { onConflict: "user_id" });

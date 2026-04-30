@@ -21,6 +21,7 @@ import {
   generateCoverLetterApi,
   type CvAdvice,
 } from "@/lib/api/ai-client";
+import { sanitizeExternalUrl, sanitizePlainText } from "@/lib/security/sanitize";
 
 export const Route = createFileRoute("/_authenticated/app/jobs/$jobId")({
   component: JobDetailPage,
@@ -164,6 +165,7 @@ function JobDetailPage() {
     setGenerating(true);
     setLetter(null);
     try {
+      const safeExtraContext = sanitizePlainText(extraContext, 2000);
       // only send overrides that differ from saved profile
       const overrides: Record<string, number> = {};
       if (profile) {
@@ -174,7 +176,7 @@ function JobDetailPage() {
       const { content } = await generateCoverLetterApi({
         jobId,
         toneOverrides: Object.keys(overrides).length ? overrides : undefined,
-        extraContext: extraContext.trim() || undefined,
+        extraContext: safeExtraContext || undefined,
       });
       setLetter(content);
       toast.success("Cover letter ready — saved to Documents");
@@ -192,6 +194,7 @@ function JobDetailPage() {
     return <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">Job not found.</CardContent></Card>;
   }
 
+  const safeApplyUrl = sanitizeExternalUrl(job.apply_url);
   const setupOk = hasCv && hasProfile;
 
   return (
@@ -235,9 +238,9 @@ function JobDetailPage() {
                   {STATUSES.map((s) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
                 </SelectContent>
               </Select>
-              {job.apply_url && (
+              {safeApplyUrl && (
                 <Button asChild variant="outline">
-                  <a href={job.apply_url} target="_blank" rel="noreferrer">
+                  <a href={safeApplyUrl} target="_blank" rel="noreferrer">
                     Apply <ExternalLink className="ml-2 h-3.5 w-3.5" />
                   </a>
                 </Button>

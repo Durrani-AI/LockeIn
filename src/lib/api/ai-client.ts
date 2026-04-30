@@ -1,6 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
-
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api/v1").replace(/\/+$/, "");
+import { API_BASE_URL } from "@/lib/api/base-url";
+import { getCsrfToken } from "@/lib/api/backend-session";
 
 type Severity = "low" | "medium" | "high";
 
@@ -31,20 +30,6 @@ type ToneOverrides = Partial<{
   warmth: number;
   energy: number;
 }>;
-
-async function getAccessToken(): Promise<string> {
-  const { data, error } = await supabase.auth.getSession();
-  if (error) {
-    throw new Error("Could not read auth session");
-  }
-
-  const token = data.session?.access_token;
-  if (!token) {
-    throw new Error("You are not signed in.");
-  }
-
-  return token;
-}
 
 function getErrorMessage(parsed: unknown, statusCode: number): string {
   if (!parsed || typeof parsed !== "object") {
@@ -78,13 +63,18 @@ function parseJsonSafe(raw: string): unknown {
 }
 
 async function postJson<TResponse>(path: string, body: Record<string, unknown>): Promise<TResponse> {
-  const token = await getAccessToken();
+  const csrfToken = getCsrfToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (csrfToken) {
+    headers["X-CSRF-Token"] = csrfToken;
+  }
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    credentials: "include",
+    headers,
     body: JSON.stringify(body),
   });
 
@@ -92,6 +82,9 @@ async function postJson<TResponse>(path: string, body: Record<string, unknown>):
   const parsed = parseJsonSafe(raw);
 
   if (!response.ok) {
+    if ((response.status === 401 || response.status === 403) && !csrfToken) {
+      throw new Error("Secure session is still initializing. Please try again.");
+    }
     throw new Error(getErrorMessage(parsed, response.status));
   }
 

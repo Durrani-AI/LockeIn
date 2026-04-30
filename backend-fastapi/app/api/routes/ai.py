@@ -4,7 +4,8 @@ import asyncio
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.dependencies import RequestContext, get_ai_pipeline, get_request_context
+from app.api.dependencies import RequestContext, get_ai_pipeline, get_request_context, rate_limit
+from app.core.sanitization import sanitize_text
 from app.models.schemas import (
     AnalyseCvForJobRequest,
     AnalyseCvForJobResponse,
@@ -30,6 +31,7 @@ def _status_for_value_error(message: str) -> int:
 async def extract_cv_text(
     payload: ExtractCvTextRequest,
     ctx: RequestContext = Depends(get_request_context),
+    _: None = Depends(rate_limit(limit=6, window_seconds=60)),
 ) -> ExtractCvTextResponse:
     try:
         cv = await ctx.supabase.fetch_cv_by_id(str(payload.cvId))
@@ -43,7 +45,9 @@ async def extract_cv_text(
             raise HTTPException(status_code=400, detail="Could not download CV file")
 
         pdf_bytes = await ctx.supabase.download_cv_file(storage_path)
-        cleaned = extract_text_from_pdf(pdf_bytes)
+        cleaned = sanitize_text(extract_text_from_pdf(pdf_bytes), max_length=120_000)
+        if not cleaned:
+            raise HTTPException(status_code=400, detail="CV text is empty after extraction")
         await ctx.supabase.update_cv_text(str(cv.get("id")), cleaned)
 
         return ExtractCvTextResponse(text=cleaned, length=len(cleaned))
@@ -58,6 +62,7 @@ async def analyse_cv_for_job(
     payload: AnalyseCvForJobRequest,
     ctx: RequestContext = Depends(get_request_context),
     ai_pipeline: AiPipeline = Depends(get_ai_pipeline),
+    _: None = Depends(rate_limit(limit=12, window_seconds=60)),
 ) -> AnalyseCvForJobResponse:
     try:
         cv, job = await asyncio.gather(
@@ -67,7 +72,7 @@ async def analyse_cv_for_job(
 
         if not cv:
             raise HTTPException(status_code=400, detail="Upload your CV first.")
-        cv_text = str(cv.get("extracted_text") or "").strip()
+        cv_text = sanitize_text(cv.get("extracted_text"), max_length=120_000)
         if not cv_text:
             raise HTTPException(status_code=400, detail="Your CV is still being parsed - try again in a moment.")
         if not job:
@@ -100,6 +105,7 @@ async def generate_cover_letter(
     payload: GenerateCoverLetterRequest,
     ctx: RequestContext = Depends(get_request_context),
     ai_pipeline: AiPipeline = Depends(get_ai_pipeline),
+    _: None = Depends(rate_limit(limit=8, window_seconds=60)),
 ) -> GenerateCoverLetterResponse:
     try:
         cv, profile, user_profile, job = await asyncio.gather(
@@ -111,7 +117,7 @@ async def generate_cover_letter(
 
         if not cv:
             raise HTTPException(status_code=400, detail="Upload your CV first.")
-        cv_text = str(cv.get("extracted_text") or "").strip()
+        cv_text = sanitize_text(cv.get("extracted_text"), max_length=120_000)
         if not cv_text:
             raise HTTPException(status_code=400, detail="Your CV is still being parsed - try again in a moment.")
         if not profile:
@@ -131,33 +137,47 @@ async def generate_cover_letter(
         override_payload = payload.toneOverrides.model_dump(exclude_none=True) if payload.toneOverrides else {}
         merged_tone.update({k: int(v) for k, v in override_payload.items()})
 
-        candidate_name = str((user_profile or {}).get("display_name") or "the candidate")
+        safe_values_text = sanitize_text(profile.get("values_text"), max_length=2000)
+        safe_voice_summary = sanitize_text(profile.get("voice_summary"), max_length=2000)
+        candidate_name = (
+            sanitize_text((user_profile or {}).get("display_name"), max_length=120, preserve_newlines=False)
+            or "the candidate"
+        )
+        safe_extra_context = sanitize_text(payload.extraContext, max_length=2000)
 
         content = await ai_pipeline.generate_cover_letter(
             cv_text=cv_text,
             job=job,
             candidate_name=candidate_name,
             merged_tone=merged_tone,
-            values_text=profile.get("values_text"),
-            voice_summary=profile.get("voice_summary"),
-            extra_context=payload.extraContext,
+            values_text=safe_values_text,
+            voice_summary=safe_voice_summary,
+            extra_context=safe_extra_context,
         )
+
+        safe_content = sanitize_text(content, max_length=12_000)
+        if not safe_content:
+            raise HTTPException(status_code=502, detail="AI returned no letter")
+
+        safe_job_title = sanitize_text(job.get("role_title"), max_length=180, preserve_newlines=False) or ""
+        safe_company = sanitize_text(job.get("company"), max_length=180, preserve_newlines=False) or ""
+        safe_description = sanitize_text(job.get("description"), max_length=20_000) or ""
 
         row_id = await ctx.supabase.insert_cover_letter(
             {
                 "user_id": ctx.user_id,
                 "cv_id": str(cv.get("id")),
                 "job_id": str(payload.jobId),
-                "job_title": job.get("role_title"),
-                "company": job.get("company"),
-                "job_description": job.get("description"),
-                "content": content,
+                "job_title": safe_job_title,
+                "company": safe_company,
+                "job_description": safe_description,
+                "content": safe_content,
                 "tone_overrides": override_payload or None,
-                "extra_context": payload.extraContext,
+                "extra_context": safe_extra_context,
             }
         )
 
-        return GenerateCoverLetterResponse(id=row_id, content=content)
+        return GenerateCoverLetterResponse(id=row_id, content=safe_content)
     except SupabaseApiError as exc:
         raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
     except ValueError as exc:

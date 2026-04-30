@@ -9,6 +9,15 @@ class HealthResponse(BaseModel):
     service: str
 
 
+class CreateSessionResponse(BaseModel):
+    userId: UUID
+    csrfToken: str = Field(min_length=16, max_length=512)
+
+
+class ClearSessionResponse(BaseModel):
+    cleared: Literal[True]
+
+
 class ExtractCvTextRequest(BaseModel):
     cvId: UUID
 
