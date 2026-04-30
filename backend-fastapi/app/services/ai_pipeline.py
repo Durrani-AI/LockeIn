@@ -125,7 +125,7 @@ CANDIDATE CV
         )
 
         payload = self._extract_json(raw)
-        payload.setdefault("fit_score", fit_score)
+        payload["fit_score"] = self._normalize_fit_score(payload.get("fit_score"), fallback=fit_score)
         return CvAdvice.model_validate(payload)
 
     async def generate_cover_letter(
@@ -225,6 +225,19 @@ ADDITIONAL CONTEXT
         if not isinstance(payload, dict):
             raise ValueError("AI returned invalid advice payload")
         return payload
+
+    @staticmethod
+    def _normalize_fit_score(raw_value: Any, *, fallback: int) -> int:
+        try:
+            value = float(raw_value)
+        except (TypeError, ValueError):
+            return int(max(0, min(100, fallback)))
+
+        # Some models return a 0-1 score instead of 0-100.
+        if 0.0 <= value <= 1.0:
+            value *= 100.0
+
+        return int(round(max(0.0, min(100.0, value))))
 
     @staticmethod
     def _fallback_cv_advice(fit_score: int) -> CvAdvice:
