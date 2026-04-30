@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -97,6 +97,7 @@ function deadlineClass(d: string | null) {
 }
 
 function JobsPage() {
+  const location = useLocation();
   const { user } = useAuth();
   const [jobs, setJobs] = useState<JobRow[]>([]);
   const [saved, setSaved] = useState<Record<string, string>>({});
@@ -161,6 +162,11 @@ function JobsPage() {
 
   const toggle = (cat: Category) =>
     setCollapsed((c) => ({ ...c, [cat]: !c[cat] }));
+
+  // This route has a nested child (/app/jobs/$jobId). Render it when active.
+  if (/^\/app\/jobs\/[^/]+$/.test(location.pathname)) {
+    return <Outlet />;
+  }
 
   return (
     <div className="space-y-6">
