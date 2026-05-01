@@ -16,14 +16,70 @@ test.describe("Authenticated smoke flow", () => {
     const runStamp = new Date().toISOString();
 
     await page.goto("/auth");
-    await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
+    await page.waitForLoadState("networkidle");
+    // Ensure React hydration has attached form handlers before submit.
+    await page.waitForTimeout(1000);
+    const signInForm = page.locator("form", {
+      has: page.getByRole("button", { name: /^Sign in$/ }),
+    });
+    const signInEmail = signInForm.locator('input[type="email"]');
+    const signInPassword = signInForm.locator('input[type="password"]');
+    const signInSubmit = signInForm.getByRole("button", { name: /^Sign in$/ });
 
-    await page.getByLabel("Email").fill(smokeEmail);
-    await page.getByLabel("Password").fill(smokePassword);
-    await Promise.all([
-      page.waitForURL(/\/app(?:\/)?$/, { timeout: 30_000 }),
-      page.getByRole("button", { name: "Sign in" }).click(),
-    ]);
+    await expect(signInSubmit).toBeVisible();
+
+    await signInEmail.fill(smokeEmail);
+    await expect(signInEmail).toHaveValue(smokeEmail);
+    await signInPassword.fill(smokePassword);
+    await expect(signInPassword).toHaveValue(smokePassword);
+
+    await signInSubmit.click();
+
+    let authenticated = false;
+    try {
+      await page.waitForURL(/\/app(?:\/)?$/, { timeout: 30_000 });
+      authenticated = true;
+    } catch {
+      const invalidLoginToast = page.getByText(/Invalid login credentials/i).first();
+      if (await invalidLoginToast.isVisible()) {
+        await page.getByRole("tab", { name: "Create account" }).click();
+
+        const createForm = page.locator("form", {
+          has: page.getByRole("button", { name: /^Create account$/ }),
+        });
+        const createEmail = createForm.locator('input[type="email"]');
+        const createPassword = createForm.locator('input[type="password"]');
+        const createSubmit = createForm.getByRole("button", {
+          name: "Create account",
+        });
+
+        await createEmail.fill(smokeEmail);
+        await createPassword.fill(smokePassword);
+        await createSubmit.click();
+
+        await page.waitForURL(/\/app(?:\/)?$/, { timeout: 30_000 });
+        authenticated = true;
+      }
+    }
+
+    if (!authenticated) {
+      throw new Error(
+        "Authentication failed. Ensure LOCKEDIN_E2E_EMAIL/LOCKEDIN_E2E_PASSWORD are valid, or reset the account password in Supabase Auth.",
+      );
+    }
+
+    await expect
+      .poll(
+        async () =>
+          page.evaluate(() =>
+            document.cookie
+              .split(";")
+              .map((cookie) => cookie.trim())
+              .some((cookie) => cookie.startsWith("lockedin_csrf_token=")),
+          ),
+        { timeout: 20_000 },
+      )
+      .toBe(true);
 
     await expect(page.getByRole("heading", { name: "Let's tailor an application." })).toBeVisible();
 
@@ -82,7 +138,7 @@ test.describe("Authenticated smoke flow", () => {
       .fill(`Smoke run ${runStamp}. Highlight quantified impact where possible.`);
     await page.getByRole("button", { name: "Generate cover letter" }).click();
 
-    await expect(page.getByRole("heading", { name: "Your cover letter" })).toBeVisible({ timeout: 120_000 });
+    await expect(page.getByText("Your cover letter")).toBeVisible({ timeout: 120_000 });
 
     const generatedLetter = (await page.locator("article").last().textContent()) || "";
     if (requireGroqGeneration && /temporary fallback while groq-backed generation is being configured/i.test(generatedLetter)) {

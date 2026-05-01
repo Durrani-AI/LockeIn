@@ -5,8 +5,37 @@ interface CreateSessionResponse {
   csrfToken: string;
 }
 
+const CSRF_COOKIE_NAME = import.meta.env.VITE_CSRF_COOKIE_NAME || "lockedin_csrf_token";
+
 let csrfToken: string | null = null;
 let syncedAccessToken: string | null = null;
+
+function readCookie(name: string): string | null {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  const prefix = `${name}=`;
+  const entry = document.cookie
+    .split(";")
+    .map((cookie) => cookie.trim())
+    .find((cookie) => cookie.startsWith(prefix));
+
+  if (!entry) {
+    return null;
+  }
+
+  const rawValue = entry.slice(prefix.length).trim();
+  if (!rawValue) {
+    return null;
+  }
+
+  try {
+    return decodeURIComponent(rawValue);
+  } catch {
+    return rawValue;
+  }
+}
 
 function parseJsonSafe(raw: string): unknown {
   if (!raw) {
@@ -40,7 +69,7 @@ function getErrorMessage(parsed: unknown, statusCode: number): string {
 }
 
 export function getCsrfToken(): string | null {
-  return csrfToken;
+  return csrfToken || readCookie(CSRF_COOKIE_NAME);
 }
 
 export async function syncBackendSession(accessToken: string): Promise<void> {
