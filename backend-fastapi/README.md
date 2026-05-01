@@ -8,6 +8,7 @@ This service is the first implementation slice for migrating backend logic from 
   - `POST /api/v1/cv/extract`
   - `POST /api/v1/cv/analyse`
   - `POST /api/v1/cover-letters/generate`
+  - `POST /api/v1/jobs/sync` (imports JSearch results into Supabase `jobs`)
 - Supabase bearer-token auth verification.
 - Supabase PostgREST and Storage operations.
 - PDF extraction via PyMuPDF.
@@ -33,6 +34,12 @@ pip install -r requirements-ml.txt
 ```bash
 cp .env.example .env
 ```
+
+Important env values:
+
+- `GROQ_API_KEY` for live AI generation (without it, fallback content is used).
+- `RAPIDAPI_KEY` for JSearch calls.
+- `SUPABASE_SERVICE_ROLE_KEY` so backend can upsert imported jobs into the shared catalog.
 
 5. Run locally:
 

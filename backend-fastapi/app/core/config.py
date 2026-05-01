@@ -16,6 +16,18 @@ class Settings(BaseSettings):
 
     supabase_url: str = Field(alias="SUPABASE_URL")
     supabase_publishable_key: str = Field(alias="SUPABASE_PUBLISHABLE_KEY")
+    supabase_service_role_key: str | None = Field(default=None, alias="SUPABASE_SERVICE_ROLE_KEY")
+
+    rapidapi_key: str | None = Field(default=None, alias="RAPIDAPI_KEY")
+    jsearch_rapidapi_host: str = Field(default="jsearch.p.rapidapi.com", alias="JSEARCH_RAPIDAPI_HOST")
+    jsearch_base_url: str = Field(default="https://jsearch.p.rapidapi.com", alias="JSEARCH_BASE_URL")
+    jsearch_default_query: str = Field(
+        default="graduate internship opportunities united kingdom",
+        alias="JSEARCH_DEFAULT_QUERY",
+    )
+    jsearch_default_num_pages: int = Field(default=1, ge=1, le=5, alias="JSEARCH_DEFAULT_NUM_PAGES")
+    jsearch_max_num_pages: int = Field(default=3, ge=1, le=10, alias="JSEARCH_MAX_NUM_PAGES")
+    jsearch_timeout_seconds: float = Field(default=20.0, ge=5.0, le=60.0, alias="JSEARCH_TIMEOUT_SECONDS")
 
     groq_api_key: str | None = Field(default=None, alias="GROQ_API_KEY")
     groq_model: str = Field(default="llama-3.3-70b-versatile", alias="GROQ_MODEL")

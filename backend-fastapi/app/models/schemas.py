@@ -81,3 +81,24 @@ class GenerateCoverLetterRequest(BaseModel):
 class GenerateCoverLetterResponse(BaseModel):
     id: UUID
     content: str
+
+
+class SyncJobsRequest(BaseModel):
+    query: str | None = Field(default=None, max_length=180)
+    page: int | None = Field(default=None, ge=1, le=10)
+    numPages: int | None = Field(default=None, ge=1, le=5)
+
+
+class SyncedJob(BaseModel):
+    id: UUID
+    company: str
+    roleTitle: str
+    location: str
+    applyUrl: str | None = None
+
+
+class SyncJobsResponse(BaseModel):
+    query: str
+    fetched: int = Field(ge=0)
+    imported: int = Field(ge=0)
+    jobs: list[SyncedJob]

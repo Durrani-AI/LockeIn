@@ -1,8 +1,9 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -13,6 +14,8 @@ import {
 } from "@/components/ui/select";
 import { Loader2, ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { syncJobsFromJsearchApi } from "@/lib/api/jobs-client";
 
 export const Route = createFileRoute("/_authenticated/app/jobs")({
   component: JobsPage,
@@ -102,33 +105,60 @@ function JobsPage() {
   const [jobs, setJobs] = useState<JobRow[]>([]);
   const [saved, setSaved] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [syncQuery, setSyncQuery] = useState("");
+  const [lastImportCount, setLastImportCount] = useState<number | null>(null);
   const [tab, setTab] = useState<(typeof TYPE_TABS)[number]["key"]>("all");
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
+  const loadJobs = useCallback(async (userId: string) => {
+    setLoading(true);
+    const [jobsRes, savedRes] = await Promise.all([
+      supabase
+        .from("jobs")
+        .select(
+          "id, company, role_title, category, job_type, location, deadline, created_at, short_summary, requirements",
+        )
+        .order("deadline", { ascending: true, nullsFirst: false }),
+      supabase.from("saved_jobs").select("job_id, status").eq("user_id", userId),
+    ]);
+
+    setJobs((jobsRes.data ?? []) as JobRow[]);
+    const map: Record<string, string> = {};
+    ((savedRes.data ?? []) as SavedRow[]).forEach((r) => {
+      if (r.status) map[r.job_id] = r.status;
+    });
+    setSaved(map);
+    setLoading(false);
+  }, []);
+
   useEffect(() => {
     if (!user) return;
-    (async () => {
-      setLoading(true);
-      const [jobsRes, savedRes] = await Promise.all([
-        supabase
-          .from("jobs")
-          .select(
-            "id, company, role_title, category, job_type, location, deadline, created_at, short_summary, requirements",
-          )
-          .order("deadline", { ascending: true, nullsFirst: false }),
-        supabase.from("saved_jobs").select("job_id, status").eq("user_id", user.id),
-      ]);
-      setJobs((jobsRes.data ?? []) as JobRow[]);
-      const map: Record<string, string> = {};
-      ((savedRes.data ?? []) as SavedRow[]).forEach((r) => {
-        if (r.status) map[r.job_id] = r.status;
+    void loadJobs(user.id);
+  }, [loadJobs, user]);
+
+  const syncFromJsearch = async () => {
+    if (!user || syncing) return;
+
+    setSyncing(true);
+    try {
+      const result = await syncJobsFromJsearchApi({
+        query: syncQuery.trim() || undefined,
+        page: 1,
+        numPages: 1,
       });
-      setSaved(map);
-      setLoading(false);
-    })();
-  }, [user]);
+
+      setLastImportCount(result.imported);
+      await loadJobs(user.id);
+      toast.success(`Imported ${result.imported} role${result.imported === 1 ? "" : "s"} from JSearch`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "JSearch sync failed");
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const filtered = useMemo(() => {
     return jobs.filter((j) => {
@@ -238,6 +268,29 @@ function JobsPage() {
             of {jobs.length} roles
           </p>
         </div>
+      </div>
+
+      <div className="rounded-xl border border-border bg-surface/40 p-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Input
+            value={syncQuery}
+            onChange={(e) => setSyncQuery(e.target.value)}
+            placeholder="Optional JSearch query (defaults to backend setting)"
+            className="sm:flex-1"
+          />
+          <Button type="button" onClick={syncFromJsearch} disabled={syncing}>
+            {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            Import from JSearch
+          </Button>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Pull fresh roles from JSearch into your shared jobs catalog without breaking save status or job detail pages.
+        </p>
+        {lastImportCount !== null ? (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Last import updated {lastImportCount} role{lastImportCount === 1 ? "" : "s"}.
+          </p>
+        ) : null}
       </div>
 
       {loading ? (
