@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: lockedin-api
+    runtime: python
+    region: frankfurt
+    plan: free
+    rootDir: backend-fastapi
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      - key: APP_ENVIRONMENT
+        value: production
+      - key: APP_AUTH_COOKIE_SECURE
+        value: "true"
+      - key: APP_AUTH_COOKIE_SAMESITE
+        value: none

@@ -40,8 +40,10 @@ test.describe("Authenticated smoke flow", () => {
       await page.waitForURL(/\/app(?:\/)?$/, { timeout: 30_000 });
       authenticated = true;
     } catch {
+      const isOnAuthPage = /\/auth(?:\?|$)/.test(page.url());
       const invalidLoginToast = page.getByText(/Invalid login credentials/i).first();
-      if (await invalidLoginToast.isVisible()) {
+      const shouldTrySignup = isOnAuthPage || (await invalidLoginToast.isVisible().catch(() => false));
+      if (shouldTrySignup) {
         await page.getByRole("tab", { name: "Create account" }).click();
 
         const createForm = page.locator("form", {
@@ -57,8 +59,20 @@ test.describe("Authenticated smoke flow", () => {
         await createPassword.fill(smokePassword);
         await createSubmit.click();
 
-        await page.waitForURL(/\/app(?:\/)?$/, { timeout: 30_000 });
-        authenticated = true;
+        try {
+          await page.waitForURL(/\/app(?:\/)?$/, { timeout: 30_000 });
+          authenticated = true;
+        } catch {
+          const signInTab = page.getByRole("tab", { name: "Sign in" });
+          if (await signInTab.isVisible().catch(() => false)) {
+            await signInTab.click();
+            await signInEmail.fill(smokeEmail);
+            await signInPassword.fill(smokePassword);
+            await signInSubmit.click();
+            await page.waitForURL(/\/app(?:\/)?$/, { timeout: 30_000 });
+            authenticated = true;
+          }
+        }
       }
     }
 
