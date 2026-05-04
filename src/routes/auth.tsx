@@ -10,6 +10,43 @@ import { Loader2 } from "lucide-react";
 import { LockedInLogo } from "@/components/lockedin-logo";
 import { toast } from "sonner";
 
+type AuthLikeError = {
+  message?: string;
+  code?: string;
+  status?: number;
+};
+
+function getAuthErrorMessage(error: unknown, mode: "signin" | "signup") {
+  const authError = error as AuthLikeError | undefined;
+  const code = authError?.code;
+
+  if (code === "invalid_credentials") {
+    return "Those credentials are not recognized for this account in the current project. If you originally used Google, continue with Google.";
+  }
+
+  if (code === "email_not_confirmed") {
+    return "Your email is not confirmed yet. Please verify your email and try again.";
+  }
+
+  if (code === "over_email_send_rate_limit") {
+    return "Email rate limit reached. Please wait before requesting another email.";
+  }
+
+  if (code === "over_request_rate_limit") {
+    return "Too many attempts in a short time. Please wait a minute and try again.";
+  }
+
+  if (mode === "signup" && (code === "email_exists" || code === "user_already_exists")) {
+    return "An account with this email already exists. Switch to Sign in.";
+  }
+
+  if (typeof authError?.message === "string" && authError.message.trim().length > 0) {
+    return authError.message;
+  }
+
+  return "Something went wrong";
+}
+
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
@@ -90,7 +127,7 @@ function AuthForm({ mode }: { mode: "signin" | "signup" }) {
         toast.success("Welcome back.");
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Something went wrong";
+      const msg = getAuthErrorMessage(err, mode);
       toast.error(msg);
     } finally {
       setBusy(false);
@@ -147,7 +184,7 @@ function GoogleButton() {
           });
           if (error) throw error;
         } catch (err) {
-          const msg = err instanceof Error ? err.message : "Something went wrong";
+          const msg = getAuthErrorMessage(err, "signin");
           toast.error(msg);
           setBusy(false);
         }
