@@ -2,6 +2,7 @@ import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/r
 import appCss from "../styles.css?url";
 import { AuthProvider } from "@/lib/auth-context";
 import { Toaster } from "@/components/ui/sonner";
+import { getServerRuntimeEnv } from "@/lib/public-env";
 
 function NotFoundComponent() {
   return (
@@ -63,6 +64,9 @@ export const Route = createRootRoute({
 });
 
 function RootShell({ children }: { children: React.ReactNode }) {
+  const runtimeEnv = getServerRuntimeEnv();
+  const runtimeEnvScript = `window.__LOCKEDIN_PUBLIC_ENV__=${JSON.stringify(runtimeEnv).replace(/</g, "\\u003c")};`;
+
   return (
     <html lang="en">
       <head>
@@ -70,6 +74,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
+        <script dangerouslySetInnerHTML={{ __html: runtimeEnvScript }} />
         <Scripts />
       </body>
     </html>
