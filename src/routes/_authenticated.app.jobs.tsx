@@ -65,6 +65,10 @@ const STATUS_OPTIONS = [
   "Rejected",
 ] as const;
 
+const AUTO_SYNC_STORAGE_KEY = "lockedin:auto-jsearch-sync-at";
+const AUTO_SYNC_MIN_INTERVAL_MS = 6 * 60 * 60 * 1000;
+const AUTO_SYNC_MIN_JOB_COUNT = 120;
+
 function statusClass(status: string | null | undefined) {
   switch (status) {
     case "Application Submitted":
@@ -139,26 +143,56 @@ function JobsPage() {
     void loadJobs(user.id);
   }, [loadJobs, user]);
 
+  const runSync = useCallback(
+    async ({ query, manual }: { query?: string; manual: boolean }) => {
+      if (!user || syncing) return;
+
+      setSyncing(true);
+      try {
+        const result = await syncJobsFromJsearchApi({
+          query: query?.trim() || undefined,
+          page: 1,
+        });
+
+        setLastImportCount(result.imported);
+        await loadJobs(user.id);
+
+        if (manual) {
+          toast.success(`Imported ${result.imported} role${result.imported === 1 ? "" : "s"} from JSearch`);
+        } else if (result.imported > 0) {
+          toast.success(`Auto-imported ${result.imported} fresh role${result.imported === 1 ? "" : "s"}.`);
+        }
+      } catch (error) {
+        if (manual) {
+          toast.error(error instanceof Error ? error.message : "JSearch sync failed");
+        } else {
+          console.error("Background JSearch sync failed", error);
+        }
+      } finally {
+        setSyncing(false);
+      }
+    },
+    [loadJobs, syncing, user],
+  );
+
   const syncFromJsearch = async () => {
-    if (!user || syncing) return;
-
-    setSyncing(true);
-    try {
-      const result = await syncJobsFromJsearchApi({
-        query: syncQuery.trim() || undefined,
-        page: 1,
-        numPages: 1,
-      });
-
-      setLastImportCount(result.imported);
-      await loadJobs(user.id);
-      toast.success(`Imported ${result.imported} role${result.imported === 1 ? "" : "s"} from JSearch`);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "JSearch sync failed");
-    } finally {
-      setSyncing(false);
-    }
+    await runSync({ query: syncQuery, manual: true });
   };
+
+  useEffect(() => {
+    if (!user || loading || syncing) return;
+    if (jobs.length >= AUTO_SYNC_MIN_JOB_COUNT) return;
+    if (typeof window === "undefined") return;
+
+    const lastRaw = window.localStorage.getItem(AUTO_SYNC_STORAGE_KEY);
+    const lastSyncAt = Number(lastRaw || "0");
+    if (Number.isFinite(lastSyncAt) && Date.now() - lastSyncAt < AUTO_SYNC_MIN_INTERVAL_MS) {
+      return;
+    }
+
+    window.localStorage.setItem(AUTO_SYNC_STORAGE_KEY, String(Date.now()));
+    void runSync({ manual: false });
+  }, [jobs.length, loading, runSync, syncing, user]);
 
   const filtered = useMemo(() => {
     return jobs.filter((j) => {
@@ -275,7 +309,7 @@ function JobsPage() {
           <Input
             value={syncQuery}
             onChange={(e) => setSyncQuery(e.target.value)}
-            placeholder="Optional JSearch query (defaults to backend setting)"
+            placeholder="Optional query to narrow import (leave empty for full market import)"
             className="sm:flex-1"
           />
           <Button type="button" onClick={syncFromJsearch} disabled={syncing}>
@@ -284,7 +318,7 @@ function JobsPage() {
           </Button>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          Pull fresh roles from JSearch into your shared jobs catalog without breaking save status or job detail pages.
+          Pull fresh roles from JSearch into your shared jobs catalog. Leaving the query empty imports across technology, finance, law, and graduate markets.
         </p>
         {lastImportCount !== null ? (
           <p className="mt-1 text-xs text-muted-foreground">

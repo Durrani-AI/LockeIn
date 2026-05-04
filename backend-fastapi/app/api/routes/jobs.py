@@ -236,10 +236,32 @@ async def sync_jobs(
             detail="SUPABASE_SERVICE_ROLE_KEY is required to sync jobs into the catalog.",
         )
 
-    raw_query = payload.query if payload.query is not None else settings.jsearch_default_query
-    query = sanitize_text(raw_query, max_length=180, preserve_newlines=False)
-    if not query:
-        raise HTTPException(status_code=400, detail="A search query is required.")
+    explicit_query = None
+    if payload.query is not None:
+        explicit_query = sanitize_text(payload.query, max_length=180, preserve_newlines=False)
+        if not explicit_query:
+            raise HTTPException(status_code=400, detail="A search query is required.")
+
+    if explicit_query:
+        queries = [explicit_query]
+    else:
+        queries = [
+            sanitize_text(candidate, max_length=180, preserve_newlines=False)
+            for candidate in settings.jsearch_default_queries
+        ]
+        queries = [candidate for candidate in queries if candidate]
+
+        if not queries:
+            fallback_query = sanitize_text(
+                settings.jsearch_default_query,
+                max_length=180,
+                preserve_newlines=False,
+            )
+            if fallback_query:
+                queries = [fallback_query]
+
+    if not queries:
+        raise HTTPException(status_code=400, detail="At least one valid search query is required.")
 
     page = payload.page or 1
     requested_pages = payload.numPages or settings.jsearch_default_num_pages
@@ -253,11 +275,14 @@ async def sync_jobs(
     )
 
     try:
-        fetched_rows = await client.search_jobs(
-            query=query,
-            page=page,
-            num_pages=num_pages,
-        )
+        fetched_rows: list[dict[str, Any]] = []
+        for query in queries:
+            rows = await client.search_jobs(
+                query=query,
+                page=page,
+                num_pages=num_pages,
+            )
+            fetched_rows.extend(rows)
     except JSearchApiError as exc:
         status_code = exc.status_code if 400 <= exc.status_code < 600 else 502
         raise HTTPException(status_code=status_code, detail=exc.message) from exc
@@ -308,8 +333,10 @@ async def sync_jobs(
             )
         )
 
+    query_label = explicit_query or f"{len(queries)} default market queries"
+
     return SyncJobsResponse(
-        query=query,
+        query=query_label,
         fetched=len(fetched_rows),
         imported=len(upserted_rows),
         jobs=jobs,

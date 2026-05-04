@@ -62,6 +62,10 @@ function parseJsonSafe(raw: string): unknown {
   }
 }
 
+function getNetworkFailureMessage(): string {
+  return `Could not reach backend API at ${API_BASE_URL}. Please confirm the backend is running and APP_ALLOWED_ORIGINS includes this frontend domain.`;
+}
+
 async function postJson<TResponse>(path: string, body: Record<string, unknown>): Promise<TResponse> {
   const csrfToken = getCsrfToken();
   const headers: Record<string, string> = {
@@ -71,12 +75,17 @@ async function postJson<TResponse>(path: string, body: Record<string, unknown>):
     headers["X-CSRF-Token"] = csrfToken;
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method: "POST",
-    credentials: "include",
-    headers,
-    body: JSON.stringify(body),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      method: "POST",
+      credentials: "include",
+      headers,
+      body: JSON.stringify(body),
+    });
+  } catch {
+    throw new Error(getNetworkFailureMessage());
+  }
 
   const raw = await response.text();
   const parsed = parseJsonSafe(raw);

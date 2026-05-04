@@ -47,6 +47,10 @@ function getErrorMessage(parsed: unknown, statusCode: number): string {
   return `Request failed (${statusCode})`;
 }
 
+function getNetworkFailureMessage(): string {
+  return `Could not reach backend API at ${API_BASE_URL}. Please confirm the backend is running and APP_ALLOWED_ORIGINS includes this frontend domain.`;
+}
+
 export async function syncJobsFromJsearchApi(input: {
   query?: string;
   page?: number;
@@ -60,12 +64,17 @@ export async function syncJobsFromJsearchApi(input: {
     headers["X-CSRF-Token"] = csrfToken;
   }
 
-  const response = await fetch(`${API_BASE_URL}/jobs/sync`, {
-    method: "POST",
-    credentials: "include",
-    headers,
-    body: JSON.stringify(input),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/jobs/sync`, {
+      method: "POST",
+      credentials: "include",
+      headers,
+      body: JSON.stringify(input),
+    });
+  } catch {
+    throw new Error(getNetworkFailureMessage());
+  }
 
   const raw = await response.text();
   const parsed = parseJsonSafe(raw);

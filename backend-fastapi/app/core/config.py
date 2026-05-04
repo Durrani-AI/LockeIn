@@ -17,6 +17,10 @@ class Settings(BaseSettings):
         default=_DEFAULT_ORIGINS,
         alias="APP_ALLOWED_ORIGINS",
     )
+    app_allowed_origins_regex: str | None = Field(
+        default=r"^https://.*\.vercel\.app$",
+        alias="APP_ALLOWED_ORIGINS_REGEX",
+    )
 
     supabase_url: str = Field(alias="SUPABASE_URL")
     supabase_publishable_key: str = Field(alias="SUPABASE_PUBLISHABLE_KEY")
@@ -29,8 +33,19 @@ class Settings(BaseSettings):
         default="graduate internship opportunities united kingdom",
         alias="JSEARCH_DEFAULT_QUERY",
     )
-    jsearch_default_num_pages: int = Field(default=1, ge=1, le=5, alias="JSEARCH_DEFAULT_NUM_PAGES")
-    jsearch_max_num_pages: int = Field(default=3, ge=1, le=10, alias="JSEARCH_MAX_NUM_PAGES")
+    jsearch_default_queries_raw: str = Field(
+        default=(
+            "software engineer internship united kingdom|"
+            "technology graduate scheme united kingdom|"
+            "finance internship united kingdom|"
+            "investment banking summer analyst united kingdom|"
+            "law vacation scheme united kingdom|"
+            "graduate scheme united kingdom"
+        ),
+        alias="JSEARCH_DEFAULT_QUERIES",
+    )
+    jsearch_default_num_pages: int = Field(default=2, ge=1, le=5, alias="JSEARCH_DEFAULT_NUM_PAGES")
+    jsearch_max_num_pages: int = Field(default=5, ge=1, le=10, alias="JSEARCH_MAX_NUM_PAGES")
     jsearch_timeout_seconds: float = Field(default=20.0, ge=5.0, le=60.0, alias="JSEARCH_TIMEOUT_SECONDS")
 
     groq_api_key: str | None = Field(default=None, alias="GROQ_API_KEY")
@@ -73,6 +88,19 @@ class Settings(BaseSettings):
 
         # Handle comma-separated format: http://...,http://...
         return [item.strip() for item in raw.split(",") if item.strip()]
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def jsearch_default_queries(self) -> list[str]:
+        """Parse default JSearch queries from a pipe/comma-delimited string."""
+        raw = self.jsearch_default_queries_raw.strip()
+        if not raw:
+            return []
+
+        normalized = raw.replace(",", "|")
+        items = [item.strip() for item in normalized.split("|") if item.strip()]
+        # Preserve order while dropping duplicates.
+        return list(dict.fromkeys(items))
 
     @field_validator("auth_cookie_samesite", mode="before")
     @classmethod

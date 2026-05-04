@@ -40,6 +40,8 @@ Important env values:
 - `GROQ_API_KEY` for live AI generation (without it, fallback content is used).
 - `RAPIDAPI_KEY` for JSearch calls.
 - `SUPABASE_SERVICE_ROLE_KEY` so backend can upsert imported jobs into the shared catalog.
+- `APP_ALLOWED_ORIGINS` and/or `APP_ALLOWED_ORIGINS_REGEX` so browser requests from your frontend domain are accepted.
+- `JSEARCH_DEFAULT_QUERIES` and `JSEARCH_DEFAULT_NUM_PAGES` to control breadth of market imports when no custom query is supplied.
 
 5. Run locally:
 
