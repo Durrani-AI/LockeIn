@@ -54,10 +54,27 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
+  const [verifiedFromLink, setVerifiedFromLink] = useState(false);
 
   useEffect(() => {
     if (!loading && user) navigate({ to: "/app" });
   }, [user, loading, navigate]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("verified") !== "1") return;
+
+    setVerifiedFromLink(true);
+    setActiveTab("signin");
+
+    url.searchParams.delete("verified");
+    const cleanedQuery = url.searchParams.toString();
+    window.history.replaceState({}, "", `${url.pathname}${cleanedQuery ? `?${cleanedQuery}` : ""}${url.hash}`);
+  }, []);
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-background px-4 py-12">
@@ -73,7 +90,19 @@ function AuthPage() {
         </Link>
 
         <div className="rounded-2xl border border-border-strong bg-card p-8 shadow-soft">
-          <Tabs defaultValue="signin" className="w-full">
+          {pendingVerificationEmail ? (
+            <div className="mb-4 rounded-md border border-primary/30 bg-primary-soft/60 px-3 py-2 text-sm text-foreground">
+              Verification email sent to <span className="font-medium">{pendingVerificationEmail}</span>. Confirm your email, then sign in.
+            </div>
+          ) : null}
+
+          {verifiedFromLink ? (
+            <div className="mb-4 rounded-md border border-success/40 bg-success/10 px-3 py-2 text-sm text-foreground">
+              Email verified successfully. You can sign in now.
+            </div>
+          ) : null}
+
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "signin" | "signup")} className="w-full">
             <TabsList className="mb-6 grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign in</TabsTrigger>
               <TabsTrigger value="signup">Create account</TabsTrigger>
@@ -83,7 +112,14 @@ function AuthPage() {
               <AuthForm mode="signin" />
             </TabsContent>
             <TabsContent value="signup">
-              <AuthForm mode="signup" />
+              <AuthForm
+                mode="signup"
+                onPendingVerification={(email) => {
+                  setPendingVerificationEmail(email);
+                  setVerifiedFromLink(false);
+                  setActiveTab("signin");
+                }}
+              />
             </TabsContent>
           </Tabs>
 
@@ -104,7 +140,13 @@ function AuthPage() {
   );
 }
 
-function AuthForm({ mode }: { mode: "signin" | "signup" }) {
+function AuthForm({
+  mode,
+  onPendingVerification,
+}: {
+  mode: "signin" | "signup";
+  onPendingVerification?: (email: string) => void;
+}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -114,13 +156,19 @@ function AuthForm({ mode }: { mode: "signin" | "signup" }) {
     setBusy(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin + "/app" },
+          options: { emailRedirectTo: `${window.location.origin}/auth?verified=1` },
         });
         if (error) throw error;
-        toast.success("Account created — you're in.");
+
+        if (data.session) {
+          toast.success("Account created — you're in.");
+        } else {
+          onPendingVerification?.(email);
+          toast.success("Check your inbox to verify your account before signing in.");
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
