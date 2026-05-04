@@ -35,19 +35,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // Set up listener BEFORE getSession
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
-      setLoading(false);
-      void syncSecureBackendSession(s);
-    });
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-      void syncSecureBackendSession(data.session);
-    });
-    return () => sub.subscription.unsubscribe();
-    // Intentionally run this once at provider mount.
+    let unsubscribe: (() => void) | undefined;
+
+    const initializeAuth = async () => {
+      try {
+        // Set up listener BEFORE getSession
+        const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+          setSession(s);
+          setLoading(false);
+          void syncSecureBackendSession(s);
+        });
+        unsubscribe = () => sub.subscription.unsubscribe();
+
+        const { data } = await supabase.auth.getSession();
+        setSession(data.session);
+        setLoading(false);
+        void syncSecureBackendSession(data.session);
+      } catch (error) {
+        console.error(
+          "Supabase auth initialization failed. Ensure VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY are configured for this frontend deployment.",
+          error,
+        );
+        setSession(null);
+        setLoading(false);
+      }
+    };
+
+    void initializeAuth();
+
+    return () => {
+      unsubscribe?.();
+    };
+
+    /*
+     * Intentionally run this once at provider mount.
+     * syncSecureBackendSession is stable enough for this lifecycle and should not retrigger auth bootstrap.
+     */
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -59,7 +82,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         signOut: async () => {
           await clearBackendSession({ bestEffort: true });
-          await supabase.auth.signOut();
+          try {
+            await supabase.auth.signOut();
+          } catch (error) {
+            console.error("Supabase sign out failed", error);
+          }
         },
       }}
     >

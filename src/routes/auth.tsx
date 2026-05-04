@@ -140,12 +140,15 @@ function GoogleButton() {
       disabled={busy}
       onClick={async () => {
         setBusy(true);
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: "google",
-          options: { redirectTo: window.location.origin + "/app" },
-        });
-        if (error) {
-          toast.error(error.message);
+        try {
+          const { error } = await supabase.auth.signInWithOAuth({
+            provider: "google",
+            options: { redirectTo: window.location.origin + "/app" },
+          });
+          if (error) throw error;
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Something went wrong";
+          toast.error(msg);
           setBusy(false);
         }
       }}
