@@ -16,3 +16,4 @@ services:
         value: "true"
       - key: APP_AUTH_COOKIE_SAMESITE
         value: none
+

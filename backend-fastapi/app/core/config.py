@@ -1,16 +1,20 @@
 from functools import lru_cache
 import json
 
-from pydantic import Field, field_validator
+from pydantic import Field, computed_field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_DEFAULT_ORIGINS = "http://localhost:3000,http://localhost:8080,http://localhost:5173"
 
 
 class Settings(BaseSettings):
     app_name: str = Field(default="LockedIn API", alias="APP_NAME")
     app_environment: str = Field(default="development", alias="APP_ENVIRONMENT")
     app_api_prefix: str = Field(default="/api/v1", alias="APP_API_PREFIX")
-    app_allowed_origins: list[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8080", "http://localhost:5173"],
+
+    # Stored as a raw string so pydantic-settings never tries json.loads() on it.
+    app_allowed_origins_raw: str = Field(
+        default=_DEFAULT_ORIGINS,
         alias="APP_ALLOWED_ORIGINS",
     )
 
@@ -50,26 +54,25 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    @field_validator("app_allowed_origins", mode="before")
-    @classmethod
-    def parse_allowed_origins(cls, value: object) -> list[str]:
-        if isinstance(value, str):
-            raw = value.strip()
-            if not raw:
-                return []
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def app_allowed_origins(self) -> list[str]:
+        """Parse the raw origins string into a list at access time."""
+        raw = self.app_allowed_origins_raw.strip()
+        if not raw:
+            return []
 
-            if raw.startswith("["):
-                try:
-                    parsed = json.loads(raw)
-                except json.JSONDecodeError:
-                    parsed = None
-                if isinstance(parsed, list):
-                    return [str(item).strip() for item in parsed if str(item).strip()]
+        # Handle JSON array format: ["http://...", "http://..."]
+        if raw.startswith("["):
+            try:
+                parsed = json.loads(raw)
+            except json.JSONDecodeError:
+                parsed = None
+            if isinstance(parsed, list):
+                return [str(item).strip() for item in parsed if str(item).strip()]
 
-            return [item.strip() for item in raw.split(",") if item.strip()]
-        if isinstance(value, list):
-            return [str(item) for item in value]
-        return []
+        # Handle comma-separated format: http://...,http://...
+        return [item.strip() for item in raw.split(",") if item.strip()]
 
     @field_validator("auth_cookie_samesite", mode="before")
     @classmethod
