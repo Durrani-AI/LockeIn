@@ -38,11 +38,6 @@ function Landing() {
 
         <div className="relative mx-auto max-w-7xl px-6 pt-24 pb-32">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border-strong bg-surface-elevated px-3 py-1 text-xs font-medium text-muted-foreground">
-              <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-              For students hunting internships & grad roles
-            </div>
-
             <h1 className="mt-6 font-display text-5xl font-semibold tracking-tight text-foreground text-balance sm:text-6xl md:text-7xl">
               Track every application. <span className="text-primary">Tailor every word.</span>
             </h1>
@@ -50,7 +45,7 @@ function Landing() {
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground text-balance">
               Browse curated internships and graduate schemes in finance, tech, and law.
               Save the ones that matter, track your progress, and let AI tailor your CV
-              and cover letter to each role — using the actual job description.
+              and cover letter to each role,using the actual job description.
             </p>
 
             <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
@@ -63,8 +58,6 @@ function Landing() {
                 <a href="#how-it-works">How it works</a>
               </Button>
             </div>
-
-            <p className="mt-6 text-xs text-muted-foreground">Free during beta · No credit card required</p>
           </div>
 
           {/* Visual mock */}
