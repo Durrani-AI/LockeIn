@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import {
   analyseCvForJobApi,
+  extractCvTextApi,
   generateCoverLetterApi,
   type CvAdvice,
 } from "@/lib/api/ai-client";
@@ -42,6 +43,11 @@ interface Job {
   salary: string | null;
 }
 
+interface LatestCv {
+  id: string;
+  extracted_text: string | null;
+}
+
 const STATUSES = ["saved", "applying", "applied", "interviewing", "offer", "rejected"] as const;
 type Status = typeof STATUSES[number];
 
@@ -61,11 +67,12 @@ function JobDetailPage() {
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [savedRow, setSavedRow] = useState<{ id: string; status: Status } | null>(null);
-  const [hasCv, setHasCv] = useState(false);
+  const [latestCv, setLatestCv] = useState<LatestCv | null>(null);
   const [hasProfile, setHasProfile] = useState(false);
   const [profile, setProfile] = useState<Record<string, number> | null>(null);
 
   // CV advice
+  const [preparingCv, setPreparingCv] = useState(false);
   const [analysing, setAnalysing] = useState(false);
   const [advice, setAdvice] = useState<CvAdvice | null>(null);
 
@@ -76,21 +83,38 @@ function JobDetailPage() {
   const [generating, setGenerating] = useState(false);
   const [letter, setLetter] = useState<string | null>(null);
 
+  const refreshLatestCv = async () => {
+    if (!user) return null;
+
+    const { data } = await supabase
+      .from("cvs")
+      .select("id, extracted_text")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const nextCv = data as LatestCv | null;
+    setLatestCv(nextCv);
+    return nextCv;
+  };
+
   useEffect(() => {
     if (!user) return;
     (async () => {
       setLoading(true);
-      const [{ data: j }, { data: sj }, { count: cvCount }, { data: prof }, { data: lastAdvice }] = await Promise.all([
+      const [{ data: j }, { data: sj }, { data: cvRow }, { data: prof }, { data: lastAdvice }] = await Promise.all([
         supabase.from("jobs").select("*").eq("id", jobId).single(),
         supabase.from("saved_jobs").select("id, status").eq("user_id", user.id).eq("job_id", jobId).maybeSingle(),
-        supabase.from("cvs").select("id", { count: "exact", head: true }),
+        supabase.from("cvs").select("id, extracted_text").eq("user_id", user.id)
+          .order("created_at", { ascending: false }).limit(1).maybeSingle(),
         supabase.from("communication_profiles").select("*").eq("user_id", user.id).maybeSingle(),
         supabase.from("cv_advice").select("*").eq("user_id", user.id).eq("job_id", jobId)
           .order("created_at", { ascending: false }).limit(1).maybeSingle(),
       ]);
       setJob(j as Job | null);
       setSavedRow(sj as { id: string; status: Status } | null);
-      setHasCv((cvCount ?? 0) > 0);
+      setLatestCv(cvRow as LatestCv | null);
       setHasProfile(!!prof);
       if (prof) {
         setProfile({
@@ -115,6 +139,35 @@ function JobDetailPage() {
       setLoading(false);
     })();
   }, [user, jobId]);
+
+  const hasCv = !!latestCv;
+
+  const ensureParsedCv = async () => {
+    if (!latestCv) {
+      toast.error("Upload your CV first.");
+      return false;
+    }
+
+    if (latestCv.extracted_text?.trim()) {
+      return true;
+    }
+
+    setPreparingCv(true);
+    try {
+      await extractCvTextApi(latestCv.id);
+      const refreshed = await refreshLatestCv();
+      if (!refreshed?.extracted_text?.trim()) {
+        throw new Error("We couldn't prepare your CV automatically. Open Your CV and retry parsing there.");
+      }
+      toast.success("CV parsed — continuing");
+      return true;
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not prepare your CV");
+      return false;
+    } finally {
+      setPreparingCv(false);
+    }
+  };
 
   const toggleSave = async () => {
     if (!user || !job) return;
@@ -147,6 +200,7 @@ function JobDetailPage() {
 
   const runAdvice = async () => {
     if (!hasCv) { toast.error("Upload your CV first."); return; }
+    if (!(await ensureParsedCv())) return;
     setAnalysing(true);
     setAdvice(null);
     try {
@@ -162,6 +216,7 @@ function JobDetailPage() {
 
   const runGenerate = async () => {
     if (!hasCv || !hasProfile) { toast.error("Complete CV and voice profile first."); return; }
+    if (!(await ensureParsedCv())) return;
     setGenerating(true);
     setLetter(null);
     try {
@@ -295,9 +350,9 @@ function JobDetailPage() {
                 AI scans your CV against this job and tells you exactly what to change. You make the edits yourself in your CV file — we never rewrite it.
               </CardDescription>
             </div>
-            <Button onClick={runAdvice} disabled={!hasCv || analysing}>
-              {analysing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-              {advice ? "Re-analyse" : "Analyse my CV"}
+            <Button onClick={runAdvice} disabled={!hasCv || analysing || preparingCv}>
+              {analysing || preparingCv ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+              {preparingCv ? "Preparing CV..." : advice ? "Re-analyse" : "Analyse my CV"}
             </Button>
           </div>
         </CardHeader>
@@ -422,9 +477,9 @@ function JobDetailPage() {
             />
           </div>
 
-          <Button onClick={runGenerate} disabled={!setupOk || generating} size="lg" className="w-full sm:w-auto">
-            {generating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-            Generate cover letter
+          <Button onClick={runGenerate} disabled={!setupOk || generating || preparingCv} size="lg" className="w-full sm:w-auto">
+            {generating || preparingCv ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+            {preparingCv ? "Preparing CV..." : "Generate cover letter"}
           </Button>
         </CardContent>
       </Card>

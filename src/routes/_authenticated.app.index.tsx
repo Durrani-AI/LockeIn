@@ -20,12 +20,13 @@ function Overview() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const [{ count: cvCount }, { data: prof }, { count: clCount }] = await Promise.all([
-        supabase.from("cvs").select("id", { count: "exact", head: true }),
+      const [{ data: latestCv }, { data: prof }, { count: clCount }] = await Promise.all([
+        supabase.from("cvs").select("id, extracted_text").eq("user_id", user.id)
+          .order("created_at", { ascending: false }).limit(1).maybeSingle(),
         supabase.from("communication_profiles").select("user_id").eq("user_id", user.id).maybeSingle(),
         supabase.from("cover_letters").select("id", { count: "exact", head: true }),
       ]);
-      setHasCv((cvCount ?? 0) > 0);
+      setHasCv(!!latestCv?.extracted_text?.trim());
       setHasProfile(!!prof);
       setRecentCount(clCount ?? 0);
     })();
