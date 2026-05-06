@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { ArrowRight, Check, FileText, Brain, PenLine } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -37,8 +36,6 @@ function Overview() {
     { title: "Build your voice profile", done: hasProfile, to: "/app/voice" as const, icon: Brain },
     { title: "Browse & save your first jobs", done: recentCount > 0, to: "/app/jobs" as const, icon: PenLine },
   ];
-
-  const ready = hasCv && hasProfile;
 
   return (
     <div className="space-y-8">
@@ -82,33 +79,6 @@ function Overview() {
               <ArrowRight className="h-4 w-4 text-muted-foreground" />
             </Link>
           ))}
-        </CardContent>
-      </Card>
-
-      {/* Generate CTA */}
-      <Card className={ready ? "border-primary/40 bg-primary-soft/40" : ""}>
-        <CardHeader>
-          <CardTitle>{ready ? "Ready when you are" : "Finish setup to start"}</CardTitle>
-          <CardDescription>
-            {ready
-              ? "Browse curated internships, placements, and graduate schemes. Tailor your CV and cover letter inside any role."
-              : "Upload a CV and complete the voice profile first."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {ready ? (
-            <Button asChild size="lg">
-              <Link to="/app/jobs">
-                Browse jobs <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          ) : (
-            <Button asChild size="lg" variant="outline">
-              <Link to={!hasCv ? "/app/cv" : "/app/voice"}>
-                {!hasCv ? "Upload your CV" : "Build voice profile"} <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          )}
         </CardContent>
       </Card>
 
