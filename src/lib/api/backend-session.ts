@@ -106,9 +106,15 @@ export async function syncBackendSession(accessToken: string): Promise<void> {
 }
 
 export async function clearBackendSession(options?: { bestEffort?: boolean }): Promise<void> {
+  const existingCsrfToken = getCsrfToken();
+  if (!existingCsrfToken && !syncedAccessToken) {
+    csrfToken = null;
+    return;
+  }
+
   const headers: Record<string, string> = {};
-  if (csrfToken) {
-    headers["X-CSRF-Token"] = csrfToken;
+  if (existingCsrfToken) {
+    headers["X-CSRF-Token"] = existingCsrfToken;
   }
 
   try {

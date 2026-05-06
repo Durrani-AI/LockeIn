@@ -56,7 +56,7 @@ class SupabaseRestClient:
         rows = await self._select(
             "cvs",
             {
-                "select": "id,user_id,extracted_text",
+                "select": "id,user_id,storage_path,extracted_text",
                 "user_id": f"eq.{user_id}",
                 "order": "created_at.desc",
                 "limit": "1",

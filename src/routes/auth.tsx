@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, type FormEvent, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -15,6 +15,19 @@ type AuthLikeError = {
   code?: string;
   status?: number;
 };
+
+const POST_AUTH_REDIRECT_KEY = "lockedin_post_auth_redirect";
+
+function consumePostAuthRedirect(): string {
+  if (typeof window === "undefined") {
+    return "/app";
+  }
+
+  const stored = window.sessionStorage.getItem(POST_AUTH_REDIRECT_KEY);
+  window.sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
+
+  return stored && stored.startsWith("/app") ? stored : "/app";
+}
 
 function getAuthErrorMessage(error: unknown, mode: "signin" | "signup") {
   const authError = error as AuthLikeError | undefined;
@@ -53,28 +66,77 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const { user, loading } = useAuth();
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
+  const [resetEmailSentTo, setResetEmailSentTo] = useState<string | null>(null);
   const [verifiedFromLink, setVerifiedFromLink] = useState(false);
+  const [recoveryMode, setRecoveryMode] = useState(false);
 
   useEffect(() => {
-    if (!loading && user) navigate({ to: "/app" });
-  }, [user, loading, navigate]);
+    if (!loading && user && !recoveryMode && typeof window !== "undefined") {
+      window.location.replace(consumePostAuthRedirect());
+    }
+  }, [user, loading, recoveryMode]);
+
+  useEffect(() => {
+    const { data: subscription } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setRecoveryMode(true);
+      }
+    });
+
+    return () => {
+      subscription.subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     const url = new URL(window.location.href);
-    if (url.searchParams.get("verified") !== "1") return;
+    const verified = url.searchParams.get("verified") === "1";
+    const recovery = url.searchParams.get("mode") === "recovery"
+      || /(?:^|[&#])type=recovery(?:&|$)/.test(window.location.hash);
 
-    setVerifiedFromLink(true);
-    setActiveTab("signin");
+    if (!verified && !recovery) return;
 
-    url.searchParams.delete("verified");
+    if (verified) {
+      setVerifiedFromLink(true);
+      setActiveTab("signin");
+      url.searchParams.delete("verified");
+    }
+    if (recovery) {
+      setRecoveryMode(true);
+      setActiveTab("signin");
+      url.searchParams.delete("mode");
+    }
+
     const cleanedQuery = url.searchParams.toString();
     window.history.replaceState({}, "", `${url.pathname}${cleanedQuery ? `?${cleanedQuery}` : ""}${url.hash}`);
   }, []);
+
+  const requestPasswordReset = async (email: string) => {
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
+      throw new Error("Enter your email first, then try password reset again.");
+    }
+
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+      redirectTo: `${window.location.origin}/auth?mode=recovery`,
+    });
+    if (error) throw error;
+
+    setResetEmailSentTo(normalizedEmail);
+    setPendingVerificationEmail(null);
+    setVerifiedFromLink(false);
+  };
+
+  const finishRecovery = () => {
+    setRecoveryMode(false);
+    if (typeof window !== "undefined") {
+      window.location.replace(consumePostAuthRedirect());
+    }
+  };
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-background px-4 py-12">
@@ -96,40 +158,56 @@ function AuthPage() {
             </div>
           ) : null}
 
+          {resetEmailSentTo && !recoveryMode ? (
+            <div className="mb-4 rounded-md border border-primary/30 bg-primary-soft/60 px-3 py-2 text-sm text-foreground">
+              Password reset email sent to <span className="font-medium">{resetEmailSentTo}</span>. Open the link in that email to choose a new password.
+            </div>
+          ) : null}
+
           {verifiedFromLink ? (
             <div className="mb-4 rounded-md border border-success/40 bg-success/10 px-3 py-2 text-sm text-foreground">
               Email verified successfully. You can sign in now.
             </div>
           ) : null}
 
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "signin" | "signup")} className="w-full">
-            <TabsList className="mb-6 grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign in</TabsTrigger>
-              <TabsTrigger value="signup">Create account</TabsTrigger>
-            </TabsList>
+          {recoveryMode ? (
+            <ResetPasswordForm
+              onBackToSignIn={() => setRecoveryMode(false)}
+              onComplete={finishRecovery}
+            />
+          ) : (
+            <>
+              <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "signin" | "signup")} className="w-full">
+                <TabsList className="mb-6 grid w-full grid-cols-2">
+                  <TabsTrigger value="signin">Sign in</TabsTrigger>
+                  <TabsTrigger value="signup">Create account</TabsTrigger>
+                </TabsList>
 
-            <TabsContent value="signin">
-              <AuthForm mode="signin" />
-            </TabsContent>
-            <TabsContent value="signup">
-              <AuthForm
-                mode="signup"
-                onPendingVerification={(email) => {
-                  setPendingVerificationEmail(email);
-                  setVerifiedFromLink(false);
-                  setActiveTab("signin");
-                }}
-              />
-            </TabsContent>
-          </Tabs>
+                <TabsContent value="signin">
+                  <AuthForm mode="signin" onForgotPassword={requestPasswordReset} />
+                </TabsContent>
+                <TabsContent value="signup">
+                  <AuthForm
+                    mode="signup"
+                    onPendingVerification={(email) => {
+                      setPendingVerificationEmail(email);
+                      setResetEmailSentTo(null);
+                      setVerifiedFromLink(false);
+                      setActiveTab("signin");
+                    }}
+                  />
+                </TabsContent>
+              </Tabs>
 
-          <div className="my-6 flex items-center gap-3">
-            <div className="h-px flex-1 bg-border" />
-            <span className="text-xs uppercase tracking-wider text-muted-foreground">or</span>
-            <div className="h-px flex-1 bg-border" />
-          </div>
+              <div className="my-6 flex items-center gap-3">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-xs uppercase tracking-wider text-muted-foreground">or</span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
 
-          <GoogleButton />
+              <GoogleButton />
+            </>
+          )}
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
@@ -143,9 +221,11 @@ function AuthPage() {
 function AuthForm({
   mode,
   onPendingVerification,
+  onForgotPassword,
 }: {
   mode: "signin" | "signup";
   onPendingVerification?: (email: string) => void;
+  onForgotPassword?: (email: string) => Promise<void>;
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -209,10 +289,116 @@ function AuthForm({
           placeholder="••••••••"
         />
       </div>
+      {mode === "signin" && onForgotPassword ? (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            className="text-xs font-medium text-primary transition-colors hover:text-primary/80"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                await onForgotPassword(email);
+                toast.success("Reset email sent. Check your inbox.");
+              } catch (err) {
+                toast.error(getAuthErrorMessage(err, "signin"));
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            Forgot password?
+          </button>
+        </div>
+      ) : null}
       <Button type="submit" className="w-full" disabled={busy}>
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : mode === "signup" ? "Create account" : "Sign in"}
       </Button>
     </form>
+  );
+}
+
+function ResetPasswordForm({
+  onBackToSignIn,
+  onComplete,
+}: {
+  onBackToSignIn: () => void;
+  onComplete: () => void;
+}) {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+      toast.success("Password updated.");
+      onComplete();
+    } catch (err) {
+      toast.error(getAuthErrorMessage(err, "signin"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <h1 className="font-display text-2xl font-semibold tracking-tight">Set a new password</h1>
+        <p className="text-sm text-muted-foreground">
+          Choose a new password for your account, then we&apos;ll take you back into LockedIn.
+        </p>
+      </div>
+
+      <form onSubmit={submit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="recovery-password">New password</Label>
+          <Input
+            id="recovery-password"
+            type="password"
+            required
+            minLength={6}
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="recovery-confirm-password">Confirm new password</Label>
+          <Input
+            id="recovery-confirm-password"
+            type="password"
+            required
+            minLength={6}
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="••••••••"
+          />
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button type="submit" className="flex-1" disabled={busy}>
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Update password"}
+          </Button>
+          <Button type="button" variant="outline" className="flex-1" disabled={busy} onClick={onBackToSignIn}>
+            Back to sign in
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }
 

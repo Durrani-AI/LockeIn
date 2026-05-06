@@ -48,5 +48,49 @@ export default defineConfig(({ mode }) => {
 				},
 			},
 		},
+		build: {
+			rollupOptions: {
+				output: {
+					manualChunks(id) {
+						if (!id.includes("node_modules")) {
+							return;
+						}
+
+						if (id.includes("@supabase")) {
+							return "supabase";
+						}
+
+						if (id.includes("@tanstack")) {
+							return "tanstack";
+						}
+
+						if (
+							id.includes("@radix-ui")
+							|| id.includes("lucide-react")
+							|| id.includes("sonner")
+						) {
+							return "ui";
+						}
+
+						if (
+							id.includes("recharts")
+							|| id.includes("d3-")
+							|| id.includes("embla-carousel")
+							|| id.includes("react-day-picker")
+						) {
+							return "visual";
+						}
+
+						if (
+							id.includes("react")
+							|| id.includes("scheduler")
+							|| id.includes("use-sync-external-store")
+						) {
+							return "react-vendor";
+						}
+					},
+				},
+			},
+		},
 	};
 });

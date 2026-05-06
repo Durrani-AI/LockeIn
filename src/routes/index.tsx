@@ -27,6 +27,7 @@ export const Route = createFileRoute("/")({
 function Landing() {
   const { user } = useAuth();
   const ctaTo = user ? "/app/jobs" : "/auth";
+  const primaryCtaLabel = user ? "Browse jobs" : "Get started";
   return (
     <div className="min-h-screen bg-background">
       <SiteNav />
@@ -45,13 +46,13 @@ function Landing() {
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground text-balance">
               Browse curated internships and graduate schemes in finance, tech, and law.
               Save the ones that matter, track your progress, and let AI tailor your CV
-              and cover letter to each role,using the actual job description.
+              and cover letter to each role, using the actual job description.
             </p>
 
             <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
               <Button asChild size="lg" className="h-12 px-6 text-base">
                 <Link to={ctaTo}>
-                  Browse jobs <ArrowRight className="ml-2 h-4 w-4" />
+                  {primaryCtaLabel} <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="h-12 px-6 text-base">

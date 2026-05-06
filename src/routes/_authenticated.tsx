@@ -32,14 +32,36 @@ function AuthLayout() {
 
   useEffect(() => {
     if (!loading && !user) {
-      navigate({ to: "/auth" });
+      if (typeof window !== "undefined") {
+        const redirectTarget = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+        if (redirectTarget.startsWith("/app")) {
+          window.sessionStorage.setItem("lockedin_post_auth_redirect", redirectTarget);
+        }
+      }
+      navigate({ to: "/auth", replace: true });
     }
   }, [loading, user, navigate]);
 
-  if (loading || !user) {
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="max-w-sm rounded-2xl border border-border bg-card p-6 text-center shadow-soft">
+          <h1 className="font-display text-2xl font-semibold tracking-tight">Redirecting to sign in</h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            This page is available after you sign in. We&apos;ll bring you straight back here.
+          </p>
+          <Button asChild className="mt-5">
+            <Link to="/auth">Continue to sign in</Link>
+          </Button>
+        </div>
       </div>
     );
   }

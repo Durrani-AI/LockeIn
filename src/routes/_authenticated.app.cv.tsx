@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, FileText, Loader2, Trash2, CheckCircle2 } from "lucide-react";
+import { Upload, FileText, Loader2, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { extractCvTextApi } from "@/lib/api/ai-client";
 
@@ -46,6 +46,20 @@ function CvPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  const parseExistingCv = async (row: CvRow) => {
+    setParsing(true);
+    try {
+      const { length } = await extractCvTextApi(row.id);
+      toast.success(`Parsed ${length.toLocaleString()} characters`);
+      await refresh();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Could not parse CV";
+      toast.error(msg);
+    } finally {
+      setParsing(false);
+    }
+  };
+
   const upload = async (file: File) => {
     if (!user) return;
     if (file.type !== "application/pdf") {
@@ -84,16 +98,12 @@ function CvPage() {
       setCv(row);
       toast.success("CV uploaded — extracting text…");
 
-      setParsing(true);
-      const { length } = await extractCvTextApi(row.id);
-      toast.success(`Parsed ${length.toLocaleString()} characters`);
-      await refresh();
+      await parseExistingCv(row);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Upload failed";
       toast.error(msg);
     } finally {
       setUploading(false);
-      setParsing(false);
     }
   };
 
@@ -129,11 +139,19 @@ function CvPage() {
                   <CardTitle className="text-base">{cv.original_filename}</CardTitle>
                   <CardDescription>
                     Uploaded {new Date(cv.created_at).toLocaleDateString()}
-                    {cv.extracted_text ? (
+                    {parsing ? (
+                      <span className="ml-2 inline-flex items-center gap-1 text-muted-foreground">
+                        <Loader2 className="h-3 w-3 animate-spin" /> Parsing…
+                      </span>
+                    ) : cv.extracted_text ? (
                       <span className="ml-2 inline-flex items-center gap-1 text-success">
                         <CheckCircle2 className="h-3 w-3" /> Parsed
                       </span>
-                    ) : null}
+                    ) : (
+                      <span className="ml-2 inline-flex items-center gap-1 text-warning">
+                        <AlertCircle className="h-3 w-3" /> Needs parsing
+                      </span>
+                    )}
                   </CardDescription>
                 </div>
               </div>
@@ -155,11 +173,31 @@ function CvPage() {
                 variant="outline"
                 size="sm"
                 className="mt-4"
-                disabled={uploading}
+                disabled={uploading || parsing}
                 onClick={() => fileRef.current?.click()}
               >
                 Replace with new PDF
               </Button>
+            </CardContent>
+          )}
+          {!cv.extracted_text && (
+            <CardContent className="space-y-4 pt-0">
+              <div className="rounded-lg border border-warning/30 bg-warning/10 p-4 text-sm text-foreground">
+                AI features need the extracted text from your PDF. If an earlier parse was interrupted, retry it here.
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Button onClick={() => void parseExistingCv(cv)} disabled={uploading || parsing}>
+                  {parsing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+                  {parsing ? "Parsing CV…" : "Retry parsing"}
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={uploading || parsing}
+                  onClick={() => fileRef.current?.click()}
+                >
+                  Replace with new PDF
+                </Button>
+              </div>
             </CardContent>
           )}
         </Card>

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -25,6 +26,24 @@ def _status_for_value_error(message: str) -> int:
     if message.startswith("AI returned"):
         return 502
     return 400
+
+
+async def _ensure_cv_text(cv: dict[str, Any], ctx: RequestContext) -> str | None:
+    cv_text = sanitize_text(cv.get("extracted_text"), max_length=120_000)
+    if cv_text:
+        return cv_text
+
+    storage_path = str(cv.get("storage_path", "")).strip()
+    if not storage_path:
+        return None
+
+    pdf_bytes = await ctx.supabase.download_cv_file(storage_path)
+    cleaned = sanitize_text(extract_text_from_pdf(pdf_bytes), max_length=120_000)
+    if not cleaned:
+        return None
+
+    await ctx.supabase.update_cv_text(str(cv.get("id")), cleaned)
+    return cleaned
 
 
 @router.post("/cv/extract", response_model=ExtractCvTextResponse)
@@ -72,7 +91,7 @@ async def analyse_cv_for_job(
 
         if not cv:
             raise HTTPException(status_code=400, detail="Upload your CV first.")
-        cv_text = sanitize_text(cv.get("extracted_text"), max_length=120_000)
+        cv_text = await _ensure_cv_text(cv, ctx)
         if not cv_text:
             raise HTTPException(status_code=400, detail="Your CV is still being parsed - try again in a moment.")
         if not job:
@@ -117,7 +136,7 @@ async def generate_cover_letter(
 
         if not cv:
             raise HTTPException(status_code=400, detail="Upload your CV first.")
-        cv_text = sanitize_text(cv.get("extracted_text"), max_length=120_000)
+        cv_text = await _ensure_cv_text(cv, ctx)
         if not cv_text:
             raise HTTPException(status_code=400, detail="Your CV is still being parsed - try again in a moment.")
         if not profile:
