@@ -57,7 +57,7 @@ function HistoryPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl font-semibold tracking-tight">Documents</h1>
+        <h1 className="font-display text-3xl font-semibold tracking-tight">Cover letters</h1>
         <p className="mt-1 text-muted-foreground">Cover letters you've generated, linked to the role they were written for.</p>
       </div>
 

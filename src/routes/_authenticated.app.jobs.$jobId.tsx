@@ -82,6 +82,7 @@ function JobDetailPage() {
   const [extraContext, setExtraContext] = useState("");
   const [generating, setGenerating] = useState(false);
   const [letter, setLetter] = useState<string | null>(null);
+  const [showLetterContent, setShowLetterContent] = useState(false);
 
   const refreshLatestCv = async () => {
     if (!user) return null;
@@ -219,6 +220,7 @@ function JobDetailPage() {
     if (!(await ensureParsedCv())) return;
     setGenerating(true);
     setLetter(null);
+    setShowLetterContent(false);
     try {
       const safeExtraContext = sanitizePlainText(extraContext, 2000);
       // only send overrides that differ from saved profile
@@ -234,7 +236,7 @@ function JobDetailPage() {
         extraContext: safeExtraContext || undefined,
       });
       setLetter(content);
-      toast.success("Cover letter ready — saved to Documents");
+      toast.success("Cover letter ready — saved to Cover letters");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Generation failed");
     } finally {
@@ -490,6 +492,9 @@ function JobDetailPage() {
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success" /> Your cover letter</CardTitle>
               <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => setShowLetterContent((open) => !open)}>
+                  {showLetterContent ? "Hide full letter" : "View full letter"}
+                </Button>
                 <Button size="sm" variant="outline" onClick={async () => { await navigator.clipboard.writeText(letter); toast.success("Copied"); }}>
                   <Copy className="mr-2 h-3.5 w-3.5" />Copy
                 </Button>
@@ -506,8 +511,14 @@ function JobDetailPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <article className="whitespace-pre-wrap rounded-lg border border-border bg-surface-elevated p-6 leading-relaxed">{letter}</article>
-            <p className="mt-3 text-xs text-muted-foreground">Saved in <Link to="/app/history" className="text-primary hover:underline">Documents</Link>.</p>
+            {showLetterContent ? (
+              <article className="whitespace-pre-wrap rounded-lg border border-border bg-surface-elevated p-6 leading-relaxed">{letter}</article>
+            ) : (
+              <div className="rounded-lg border border-border bg-surface/40 p-4 text-sm text-muted-foreground">
+                Your cover letter is ready. Click <span className="font-medium text-foreground">View full letter</span> to open the full content.
+              </div>
+            )}
+            <p className="mt-3 text-xs text-muted-foreground">Saved in <Link to="/app/history" className="text-primary hover:underline">Cover letters</Link>.</p>
           </CardContent>
         </Card>
       )}

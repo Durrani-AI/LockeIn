@@ -13,6 +13,7 @@ export const Route = createFileRoute("/_authenticated")({
 type NavItem = {
   to: "/app" | "/app/jobs" | "/app/saved" | "/app/cv" | "/app/voice" | "/app/history";
   label: string;
+  mobileLabel?: string;
   icon: typeof Sparkles;
   exact?: boolean;
 };
@@ -22,7 +23,7 @@ const NAV: NavItem[] = [
   { to: "/app/saved", label: "Saved & tracker", icon: Bookmark },
   { to: "/app/cv", label: "Your CV", icon: FileText },
   { to: "/app/voice", label: "Voice profile", icon: Brain },
-  { to: "/app/history", label: "Documents", icon: History },
+  { to: "/app/history", label: "Cover letters", mobileLabel: "Letters", icon: History },
 ];
 
 function AuthLayout() {
@@ -149,7 +150,7 @@ function AuthLayout() {
                   )}
                 >
                   <item.icon className="h-4 w-4" />
-                  {item.label.split(" ")[0]}
+                  {item.mobileLabel ?? item.label.split(" ")[0]}
                 </Link>
               );
             })}

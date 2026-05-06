@@ -12,7 +12,7 @@ const requireGroqGeneration = (process.env.LOCKEDIN_E2E_REQUIRE_GROQ || "").toLo
 test.describe("Authenticated smoke flow", () => {
   test.skip(!smokeEmail || !smokePassword, "Set LOCKEDIN_E2E_EMAIL and LOCKEDIN_E2E_PASSWORD to run smoke tests.");
 
-  test("sign in, prepare profile, generate cover letter, and verify documents", async ({ page }) => {
+  test("sign in, prepare profile, generate cover letter, and verify cover letters", async ({ page }) => {
     const runStamp = new Date().toISOString();
 
     await page.goto("/auth");
@@ -153,6 +153,7 @@ test.describe("Authenticated smoke flow", () => {
     await page.getByRole("button", { name: "Generate cover letter" }).click();
 
     await expect(page.getByText("Your cover letter")).toBeVisible({ timeout: 120_000 });
+    await page.getByRole("button", { name: "View full letter" }).click();
 
     const generatedLetter = (await page.locator("article").last().textContent()) || "";
     if (requireGroqGeneration && /temporary fallback while groq-backed generation is being configured/i.test(generatedLetter)) {
@@ -162,7 +163,7 @@ test.describe("Authenticated smoke flow", () => {
     }
 
     await page.goto("/app/history");
-    await expect(page.getByRole("heading", { name: "Documents" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Cover letters" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Open job" }).first()).toBeVisible();
   });
 });
