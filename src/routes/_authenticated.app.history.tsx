@@ -82,17 +82,20 @@ function HistoryPage() {
               <Card key={l.id}>
                 <CardHeader>
                   <div className="flex items-start justify-between gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setOpenId(open ? null : l.id)}
-                      className="text-left"
-                    >
+                    <div className="text-left">
                       <CardTitle className="text-base">{l.job_title}</CardTitle>
                       <CardDescription>
                         {l.company} · {new Date(l.created_at).toLocaleDateString()}
                       </CardDescription>
-                    </button>
-                    <div className="flex gap-1">
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant={open ? "secondary" : "outline"}
+                        onClick={() => setOpenId(open ? null : l.id)}
+                      >
+                        {open ? "Hide" : "Show"}
+                      </Button>
                       {l.job_id && (
                         <Button size="sm" variant="ghost" asChild>
                           <Link to="/app/jobs/$jobId" params={{ jobId: l.job_id }} title="Open job">
