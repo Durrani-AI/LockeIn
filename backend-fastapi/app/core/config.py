@@ -36,10 +36,12 @@ class Settings(BaseSettings):
     jsearch_default_queries_raw: str = Field(
         default=(
             "software engineer internship united kingdom|"
-            "technology graduate scheme united kingdom|"
+            "machine learning internship united kingdom|"
+            "cloud engineering graduate scheme united kingdom|"
             "finance internship united kingdom|"
             "investment banking summer analyst united kingdom|"
             "law vacation scheme united kingdom|"
+            "strategy consulting internship united kingdom|"
             "graduate scheme united kingdom"
         ),
         alias="JSEARCH_DEFAULT_QUERIES",

@@ -15,6 +15,39 @@ from app.services.jsearch_client import JSearchApiError, JSearchClient
 
 router = APIRouter(tags=["jobs"])
 
+INDUSTRY_QUERY_PRESETS: dict[str, tuple[str, ...]] = {
+    "technology": (
+        "software engineer internship united kingdom",
+        "machine learning internship united kingdom",
+        "cloud engineering graduate scheme united kingdom",
+        "cyber security placement united kingdom",
+    ),
+    "finance": (
+        "investment banking summer analyst united kingdom",
+        "finance internship united kingdom",
+        "asset management graduate scheme united kingdom",
+        "risk and compliance placement united kingdom",
+    ),
+    "law": (
+        "law vacation scheme united kingdom",
+        "training contract united kingdom",
+        "commercial law internship united kingdom",
+        "legal operations graduate scheme united kingdom",
+    ),
+    "consulting": (
+        "strategy consulting internship united kingdom",
+        "management consulting graduate scheme united kingdom",
+        "risk advisory placement united kingdom",
+        "transformation consultant graduate united kingdom",
+    ),
+    "graduate": (
+        "graduate scheme united kingdom",
+        "commercial graduate programme united kingdom",
+        "business operations graduate scheme united kingdom",
+        "public sector graduate programme united kingdom",
+    ),
+}
+
 
 def _parse_iso_datetime(value: object) -> datetime | None:
     raw = sanitize_text(value, max_length=64, preserve_newlines=False)
@@ -244,6 +277,8 @@ async def sync_jobs(
 
     if explicit_query:
         queries = [explicit_query]
+    elif payload.industry:
+        queries = list(INDUSTRY_QUERY_PRESETS[payload.industry])
     else:
         queries = [
             sanitize_text(candidate, max_length=180, preserve_newlines=False)
@@ -333,7 +368,12 @@ async def sync_jobs(
             )
         )
 
-    query_label = explicit_query or f"{len(queries)} default market queries"
+    if explicit_query:
+        query_label = explicit_query
+    elif payload.industry:
+        query_label = f"{payload.industry} market preset"
+    else:
+        query_label = f"{len(queries)} default market queries"
 
     return SyncJobsResponse(
         query=query_label,

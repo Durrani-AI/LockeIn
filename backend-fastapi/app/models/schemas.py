@@ -87,6 +87,7 @@ class SyncJobsRequest(BaseModel):
     query: str | None = Field(default=None, max_length=180)
     page: int | None = Field(default=None, ge=1, le=10)
     numPages: int | None = Field(default=None, ge=1, le=5)
+    industry: Literal["technology", "finance", "law", "consulting", "graduate"] | None = None
 
 
 class SyncedJob(BaseModel):

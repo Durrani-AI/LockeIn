@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "LockedIn — Internship & Graduate Application Tracker" },
+      { title: "LockedIn" },
       {
         name: "description",
         content:

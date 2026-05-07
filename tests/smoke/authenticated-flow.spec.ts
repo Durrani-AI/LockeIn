@@ -126,13 +126,15 @@ test.describe("Authenticated smoke flow", () => {
     }
 
     await page.goto("/app/jobs");
-    await expect(page.getByRole("heading", { name: "Application Tracker" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Choose the industry you want to target first." })).toBeVisible();
+    await page.getByRole("link", { name: /Technology/i }).click();
+    await expect(page.getByRole("heading", { name: "Technology roles" })).toBeVisible();
 
     if (smokeJsearchQuery) {
       await page
-        .getByPlaceholder("Optional JSearch query (defaults to backend setting)")
+        .getByPlaceholder(/Optional query for technology roles/i)
         .fill(smokeJsearchQuery);
-      await page.getByRole("button", { name: "Import from JSearch" }).click();
+      await page.getByRole("button", { name: "Refresh technology feed" }).click();
       await page.waitForLoadState("networkidle");
     }
 
