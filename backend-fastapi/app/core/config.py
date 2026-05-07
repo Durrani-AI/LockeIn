@@ -42,7 +42,8 @@ class Settings(BaseSettings):
             "investment banking summer analyst united kingdom|"
             "law vacation scheme united kingdom|"
             "mechanical engineering internship united kingdom|"
-            "scientist graduate scheme united kingdom"
+            "scientist graduate scheme united kingdom|"
+            "biotech internship united kingdom"
         ),
         alias="JSEARCH_DEFAULT_QUERIES",
     )

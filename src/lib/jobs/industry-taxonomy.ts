@@ -244,16 +244,16 @@ export const INDUSTRY_DEFINITIONS: Record<Industry, IndustryDefinition> = {
   },
   "engineering-science": {
     key: "engineering-science",
-    label: "Engineering & Science",
-    description: "Engineering, scientific research, laboratory, manufacturing, and life-science roles.",
-    note: "For users targeting engineering placements, technical graduate schemes, and science-focused programmes.",
+    label: "Engineering, Science & Biotech",
+    description: "Engineering, scientific research, laboratory, manufacturing, biotech, and life-science roles.",
+    note: "For users targeting engineering placements, technical graduate schemes, biotech, and science-focused programmes.",
     accentClass: "border-fuchsia-500/30 bg-fuchsia-500/10",
     mappedCategories: ["technology", "graduate"],
     matchKeywords: ENGINEERING_SCIENCE_KEYWORDS,
     excludeKeywords: TECHNOLOGY_KEYWORDS,
     emptyState: "No engineering or science roles match the current filters.",
-    syncLabel: "Refresh engineering & science feed",
-    syncPlaceholder: "Optional query for engineering or science roles, for example mechanical engineering placement united kingdom",
+    syncLabel: "Refresh engineering, science & biotech feed",
+    syncPlaceholder: "Optional query for engineering, science, or biotech roles, for example biotech internship united kingdom",
     tracks: [
       {
         key: "mechanical-manufacturing",
@@ -275,7 +275,7 @@ export const INDUSTRY_DEFINITIONS: Record<Industry, IndustryDefinition> = {
       },
       {
         key: "science-research",
-        label: "Science & Research",
+        label: "Science, Research & Biotech",
         description: "Research, laboratory, biotech, pharmaceutical, and scientific roles.",
         keywords: ["scientist", "research", "laboratory", "lab", "biotech", "pharmaceutical", "life science", "physics", "chemistry", "biology"],
       },

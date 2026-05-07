@@ -39,6 +39,7 @@ INDUSTRY_QUERY_PRESETS: dict[str, tuple[str, ...]] = {
         "civil engineering placement united kingdom",
         "electrical engineering graduate scheme united kingdom",
         "scientist internship united kingdom",
+        "biotech internship united kingdom",
     ),
 }
 
