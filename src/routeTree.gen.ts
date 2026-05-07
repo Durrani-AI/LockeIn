@@ -19,6 +19,7 @@ import { Route as AuthenticatedAppJobsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAppHistoryRouteImport } from './routes/_authenticated.app.history'
 import { Route as AuthenticatedAppCvRouteImport } from './routes/_authenticated.app.cv'
 import { Route as AuthenticatedAppJobsJobIdRouteImport } from './routes/_authenticated.app.jobs.$jobId'
+import { Route as AuthenticatedAppJobsIndustryIndustryRouteImport } from './routes/_authenticated.app.jobs.industry.$industry'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -70,6 +71,12 @@ const AuthenticatedAppJobsJobIdRoute =
     path: '/$jobId',
     getParentRoute: () => AuthenticatedAppJobsRoute,
   } as any)
+const AuthenticatedAppJobsIndustryIndustryRoute =
+  AuthenticatedAppJobsIndustryIndustryRouteImport.update({
+    id: '/industry/$industry',
+    path: '/industry/$industry',
+    getParentRoute: () => AuthenticatedAppJobsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/app/voice': typeof AuthenticatedAppVoiceRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/app/jobs/$jobId': typeof AuthenticatedAppJobsJobIdRoute
+  '/app/jobs/industry/$industry': typeof AuthenticatedAppJobsIndustryIndustryRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -92,6 +100,7 @@ export interface FileRoutesByTo {
   '/app/voice': typeof AuthenticatedAppVoiceRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/app/jobs/$jobId': typeof AuthenticatedAppJobsJobIdRoute
+  '/app/jobs/industry/$industry': typeof AuthenticatedAppJobsIndustryIndustryRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -105,6 +114,7 @@ export interface FileRoutesById {
   '/_authenticated/app/voice': typeof AuthenticatedAppVoiceRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/app/jobs/$jobId': typeof AuthenticatedAppJobsJobIdRoute
+  '/_authenticated/app/jobs/industry/$industry': typeof AuthenticatedAppJobsIndustryIndustryRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/app/voice'
     | '/app/'
     | '/app/jobs/$jobId'
+    | '/app/jobs/industry/$industry'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/app/voice'
     | '/app'
     | '/app/jobs/$jobId'
+    | '/app/jobs/industry/$industry'
   id:
     | '__root__'
     | '/'
@@ -141,6 +153,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/voice'
     | '/_authenticated/app/'
     | '/_authenticated/app/jobs/$jobId'
+    | '/_authenticated/app/jobs/industry/$industry'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -221,15 +234,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppJobsJobIdRouteImport
       parentRoute: typeof AuthenticatedAppJobsRoute
     }
+    '/_authenticated/app/jobs/industry/$industry': {
+      id: '/_authenticated/app/jobs/industry/$industry'
+      path: '/industry/$industry'
+      fullPath: '/app/jobs/industry/$industry'
+      preLoaderRoute: typeof AuthenticatedAppJobsIndustryIndustryRouteImport
+      parentRoute: typeof AuthenticatedAppJobsRoute
+    }
   }
 }
 
 interface AuthenticatedAppJobsRouteChildren {
   AuthenticatedAppJobsJobIdRoute: typeof AuthenticatedAppJobsJobIdRoute
+  AuthenticatedAppJobsIndustryIndustryRoute: typeof AuthenticatedAppJobsIndustryIndustryRoute
 }
 
 const AuthenticatedAppJobsRouteChildren: AuthenticatedAppJobsRouteChildren = {
   AuthenticatedAppJobsJobIdRoute: AuthenticatedAppJobsJobIdRoute,
+  AuthenticatedAppJobsIndustryIndustryRoute:
+    AuthenticatedAppJobsIndustryIndustryRoute,
 }
 
 const AuthenticatedAppJobsRouteWithChildren =

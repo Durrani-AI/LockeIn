@@ -55,7 +55,7 @@ export async function syncJobsFromJsearchApi(input: {
   query?: string;
   page?: number;
   numPages?: number;
-  industry?: "technology" | "finance" | "law" | "consulting" | "graduate";
+  industry?: "technology" | "finance" | "law" | "engineering-science";
 }): Promise<SyncJobsResponse> {
   const csrfToken = getCsrfToken();
   const headers: Record<string, string> = {

@@ -34,17 +34,11 @@ INDUSTRY_QUERY_PRESETS: dict[str, tuple[str, ...]] = {
         "commercial law internship united kingdom",
         "legal operations graduate scheme united kingdom",
     ),
-    "consulting": (
-        "strategy consulting internship united kingdom",
-        "management consulting graduate scheme united kingdom",
-        "risk advisory placement united kingdom",
-        "transformation consultant graduate united kingdom",
-    ),
-    "graduate": (
-        "graduate scheme united kingdom",
-        "commercial graduate programme united kingdom",
-        "business operations graduate scheme united kingdom",
-        "public sector graduate programme united kingdom",
+    "engineering-science": (
+        "mechanical engineering internship united kingdom",
+        "civil engineering placement united kingdom",
+        "electrical engineering graduate scheme united kingdom",
+        "scientist internship united kingdom",
     ),
 }
 
