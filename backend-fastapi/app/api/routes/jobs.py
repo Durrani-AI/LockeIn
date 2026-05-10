@@ -6,7 +6,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.dependencies import rate_limit
+from app.api.dependencies import get_request_context, rate_limit, RequestContext
 from app.core.config import get_settings
 from app.core.sanitization import sanitize_external_url, sanitize_text
 from app.models.schemas import SyncJobsRequest, SyncJobsResponse, SyncedJob
@@ -248,6 +248,7 @@ def _normalize_jsearch_job(raw_job: dict[str, Any]) -> dict[str, Any] | None:
 @router.post("/jobs/sync", response_model=SyncJobsResponse)
 async def sync_jobs(
     payload: SyncJobsRequest,
+    ctx: RequestContext = Depends(get_request_context),  # explicit auth guard
     _: None = Depends(rate_limit(limit=4, window_seconds=60)),
 ) -> SyncJobsResponse:
     settings = get_settings()

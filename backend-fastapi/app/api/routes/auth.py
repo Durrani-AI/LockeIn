@@ -2,13 +2,46 @@ from __future__ import annotations
 
 import secrets
 
-from fastapi import APIRouter, Header, HTTPException, Response, status
+from fastapi import APIRouter, Header, HTTPException, Request, Response, status
 
+from app.api.dependencies import get_rate_limiter
 from app.core.config import get_settings
 from app.models.schemas import ClearSessionResponse, CreateSessionResponse
 from app.services.supabase_rest import SupabaseApiError, SupabaseRestClient
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+# ── IP-based rate limiting for pre-auth endpoints ─────────────────────
+# These endpoints don't have a user_id yet, so we key by client IP.
+_SESSION_RATE_LIMIT = 20      # max requests
+_SESSION_RATE_WINDOW = 60     # per window (seconds)
+
+
+def _get_client_ip(request: Request) -> str:
+    """Extract the real client IP, respecting X-Forwarded-For behind proxies."""
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        # First entry is the original client IP.
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def _enforce_ip_rate_limit(request: Request) -> None:
+    """Enforce IP-based rate limiting for unauthenticated endpoints."""
+    client_ip = _get_client_ip(request)
+    limiter = get_rate_limiter()
+    key = f"ip:{client_ip}:{request.url.path}"
+    decision = limiter.evaluate(
+        key=key,
+        limit=_SESSION_RATE_LIMIT,
+        window_seconds=_SESSION_RATE_WINDOW,
+    )
+    if not decision.allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Too many requests. Retry in {decision.retry_after_seconds} seconds.",
+            headers={"Retry-After": str(decision.retry_after_seconds)},
+        )
 
 
 def _parse_bearer_token(authorization: str | None) -> str:
@@ -36,9 +69,13 @@ def _parse_bearer_token(authorization: str | None) -> str:
 
 @router.post("/session", response_model=CreateSessionResponse)
 async def create_session(
+    request: Request,
     response: Response,
     authorization: str | None = Header(default=None, alias="Authorization"),
 ) -> CreateSessionResponse:
+    # IP-based rate limit — runs before any token validation.
+    _enforce_ip_rate_limit(request)
+
     token = _parse_bearer_token(authorization)
     settings = get_settings()
 
@@ -88,8 +125,12 @@ async def create_session(
 
 @router.delete("/session", response_model=ClearSessionResponse)
 async def clear_session(
+    request: Request,
     response: Response,
 ) -> ClearSessionResponse:
+    # IP-based rate limit on logout too — prevents abuse.
+    _enforce_ip_rate_limit(request)
+
     settings = get_settings()
 
     response.delete_cookie(
@@ -110,3 +151,4 @@ async def clear_session(
     )
 
     return ClearSessionResponse(cleared=True)
+

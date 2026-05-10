@@ -14,6 +14,17 @@ class RateLimitDecision:
 
 
 class InMemoryRateLimiter:
+    """Sliding-window rate limiter backed by in-memory deques.
+
+    TRADEOFF: All rate-limit state lives in process memory and is lost on
+    restart (Render free-tier sleep/wake, deploys, crashes).  This is
+    acceptable for a single-instance deployment where rate limiting is a
+    best-effort abuse-prevention layer (auth + RLS are the real guards).
+
+    If the service scales to multiple instances or needs durable limiting,
+    replace this with a Redis-backed implementation (e.g. redis ZRANGEBYSCORE
+    sliding window) without changing the public ``evaluate()`` interface.
+    """
     def __init__(self, *, max_keys: int = 50_000) -> None:
         self._hits: defaultdict[str, deque[float]] = defaultdict(deque)
         self._lock = Lock()

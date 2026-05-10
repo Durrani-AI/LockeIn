@@ -18,7 +18,7 @@ class Settings(BaseSettings):
         alias="APP_ALLOWED_ORIGINS",
     )
     app_allowed_origins_regex: str | None = Field(
-        default=r"^https://.*\.vercel\.app$",
+        default=r"^https://locke(d-?in|in).*\.vercel\.app$",
         alias="APP_ALLOWED_ORIGINS_REGEX",
     )
 
