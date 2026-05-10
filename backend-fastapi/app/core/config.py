@@ -1,6 +1,7 @@
 from functools import lru_cache
 import json
 
+# pyrefly: ignore [missing-import]
 from pydantic import Field, computed_field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
