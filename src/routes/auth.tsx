@@ -148,7 +148,7 @@ function AuthPage() {
           <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-border-strong bg-surface transition-colors group-hover:border-primary/60">
             <LockedInLogo className="h-7 w-7" animated />
           </span>
-          LockedIn
+          LockeIn
         </Link>
 
         <div className="rounded-2xl border border-border-strong bg-card p-8 shadow-soft">
@@ -358,7 +358,7 @@ function ResetPasswordForm({
       <div className="space-y-2">
         <h1 className="font-display text-2xl font-semibold tracking-tight">Set a new password</h1>
         <p className="text-sm text-muted-foreground">
-          Choose a new password for your account, then we&apos;ll take you back into LockedIn.
+          Choose a new password for your account, then we&apos;ll take you back into LockeIn.
         </p>
       </div>
 

@@ -76,7 +76,7 @@ function AuthLayout() {
             <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-border-strong bg-surface transition-colors group-hover:border-primary/60">
               <LockedInLogo className="h-6 w-6" animated />
             </span>
-            LockedIn
+            LockeIn
           </Link>
 
           <nav className="space-y-1">
@@ -125,7 +125,7 @@ function AuthLayout() {
             <span className="flex h-8 w-8 items-center justify-center rounded-md border border-border-strong bg-surface">
               <LockedInLogo className="h-5 w-5" />
             </span>
-            LockedIn
+            LockeIn
           </Link>
           <Button variant="ghost" size="sm" onClick={async () => { await signOut(); navigate({ to: "/" }); }}>
             <LogOut className="h-4 w-4" />

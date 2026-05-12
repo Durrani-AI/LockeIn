@@ -15,7 +15,9 @@ dist-ssr
 .tanstack/**
 .nitro
 .vercel
-__pycache__
+__pycache__/
+**/__pycache__/
+*.pyc
 *.local
 playwright-report/
 test-results/
@@ -27,8 +29,7 @@ backend-fastapi/.env
 backend-fastapi/.env.*
 !.env.example
 !backend-fastapi/.env.example
-
-# Wrangler / Cloudflare
+# Generated / cache directories
 .wrangler/
 .dev.vars
 

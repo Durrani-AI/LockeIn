@@ -45,6 +45,8 @@ export const Route = createFileRoute("/_authenticated/app/jobs/industry/$industr
 function IndustryJobsPage() {
   const params = Route.useParams();
   const { user } = useAuth();
+
+  // ── State ────────────────────────────────────────────────────────
   const [jobs, setJobs] = useState<JobRow[]>([]);
   const [saved, setSaved] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -61,6 +63,7 @@ function IndustryJobsPage() {
   const selectedIndustryDefinition = selectedIndustry ? INDUSTRY_DEFINITIONS[selectedIndustry] : null;
   const selectedTrack = selectedIndustry ? getTrackDefinition(selectedIndustry, selectedTrackKey) : undefined;
 
+  // ── Data loading ─────────────────────────────────────────────────
   const loadJobs = useCallback(async (userId: string) => {
     setLoading(true);
     const [jobsRes, savedRes] = await Promise.all([
@@ -96,6 +99,7 @@ function IndustryJobsPage() {
     setCollapsed({});
   }, [selectedIndustry]);
 
+  // ── JSearch sync ─────────────────────────────────────────────────
   const runSync = useCallback(
     async ({ query, manual, industry }: { query?: string; manual: boolean; industry: Industry }) => {
       if (!user || syncing) return;
@@ -135,6 +139,7 @@ function IndustryJobsPage() {
     await runSync({ query: syncQuery, manual: true, industry: selectedIndustry });
   };
 
+  // ── Filtering and grouping ────────────────────────────────────────
   const scopedJobs = useMemo(() => {
     if (!selectedIndustry) {
       return [] as JobRow[];
@@ -245,6 +250,7 @@ function IndustryJobsPage() {
     setCollapsed((current) => ({ ...current, [key]: !current[key] }));
   };
 
+  // ── Render ───────────────────────────────────────────────────────
   if (!selectedIndustry || !selectedIndustryDefinition) {
     return (
       <Card>

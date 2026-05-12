@@ -10,7 +10,7 @@ _DEFAULT_ORIGINS = "http://localhost:3000,http://localhost:8080,http://localhost
 
 
 class Settings(BaseSettings):
-    app_name: str = Field(default="LockedIn API", alias="APP_NAME")
+    app_name: str = Field(default="LockeIn API", alias="APP_NAME")
     app_environment: str = Field(default="development", alias="APP_ENVIRONMENT")
     app_api_prefix: str = Field(default="/api/v1", alias="APP_API_PREFIX")
 

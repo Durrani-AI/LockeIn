@@ -64,6 +64,8 @@ function JobDetailPage() {
   const { jobId } = Route.useParams();
   const { user } = useAuth();
 
+  // ── State ────────────────────────────────────────────────────────
+
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [savedRow, setSavedRow] = useState<{ id: string; status: Status } | null>(null);
@@ -84,6 +86,7 @@ function JobDetailPage() {
   const [letter, setLetter] = useState<string | null>(null);
   const [showLetterContent, setShowLetterContent] = useState(false);
 
+  // ── Data loading ─────────────────────────────────────────────────
   const refreshLatestCv = async () => {
     if (!user) return null;
 
@@ -141,8 +144,10 @@ function JobDetailPage() {
     })();
   }, [user, jobId]);
 
+  // ── Derived state ────────────────────────────────────────────────
   const hasCv = !!latestCv;
 
+  // ── CV preparation ───────────────────────────────────────────────
   const ensureParsedCv = async () => {
     if (!latestCv) {
       toast.error("Upload your CV first.");
@@ -170,6 +175,7 @@ function JobDetailPage() {
     }
   };
 
+  // ── Save / status tracking ───────────────────────────────────────
   const toggleSave = async () => {
     if (!user || !job) return;
     if (savedRow) {
@@ -199,6 +205,7 @@ function JobDetailPage() {
     toast.success(`Status: ${status}`);
   };
 
+  // ── AI: CV analysis ──────────────────────────────────────────────
   const runAdvice = async () => {
     if (!hasCv) { toast.error("Upload your CV first."); return; }
     if (!(await ensureParsedCv())) return;
@@ -215,6 +222,7 @@ function JobDetailPage() {
     }
   };
 
+  // ── AI: Cover letter generation ──────────────────────────────────
   const runGenerate = async () => {
     if (!hasCv || !hasProfile) { toast.error("Complete CV and voice profile first."); return; }
     if (!(await ensureParsedCv())) return;
@@ -244,6 +252,7 @@ function JobDetailPage() {
     }
   };
 
+  // ── Render ───────────────────────────────────────────────────────
   if (loading) {
     return <div className="flex justify-center py-16"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
   }
