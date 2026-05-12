@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "@/lib/api/base-url";
+import { getErrorMessage, parseJsonSafe } from "@/lib/api/http-helpers";
 
 interface CreateSessionResponse {
   userId: string;
@@ -37,36 +38,6 @@ function readCookie(name: string): string | null {
   }
 }
 
-function parseJsonSafe(raw: string): unknown {
-  if (!raw) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(raw) as unknown;
-  } catch {
-    return null;
-  }
-}
-
-function getErrorMessage(parsed: unknown, statusCode: number): string {
-  if (!parsed || typeof parsed !== "object") {
-    return `Request failed (${statusCode})`;
-  }
-
-  const payload = parsed as { detail?: unknown; message?: unknown; error?: unknown };
-  if (typeof payload.detail === "string" && payload.detail) {
-    return payload.detail;
-  }
-  if (typeof payload.message === "string" && payload.message) {
-    return payload.message;
-  }
-  if (typeof payload.error === "string" && payload.error) {
-    return payload.error;
-  }
-
-  return `Request failed (${statusCode})`;
-}
 
 export function getCsrfToken(): string | null {
   return csrfToken || readCookie(CSRF_COOKIE_NAME);

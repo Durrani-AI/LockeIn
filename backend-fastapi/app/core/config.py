@@ -3,6 +3,7 @@ import json
 
 # pyrefly: ignore [missing-import]
 from pydantic import Field, computed_field, field_validator
+# pyrefly: ignore [missing-import]
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _DEFAULT_ORIGINS = "http://localhost:3000,http://localhost:8080,http://localhost:5173"
