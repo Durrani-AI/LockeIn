@@ -21,26 +21,39 @@ A full-stack career platform for UK students and graduates. Upload your CV, get 
 
 ## Architecture
 
-```
-┌──────────────────────────────────────────────────────────┐
-│                       Browser                            │
-│  React + TanStack Router + Tailwind + shadcn/ui          │
-│  Auth via Supabase JS SDK → httpOnly cookie session      │
-└──────────────┬───────────────────────────┬───────────────┘
-               │ REST (cookie + CSRF)      │ Direct (anon key)
-               ▼                           ▼
-┌──────────────────────────┐   ┌──────────────────────────┐
-│    FastAPI Backend        │   │       Supabase            │
-│    /api/v1/*              │   │  Auth · PostgREST · S3    │
-│                           │   │  (RLS enforced)           │
-│  ┌─────────┐ ┌──────────┐│   └──────────────────────────┘
-│  │ AI      │ │ Jobs     ││              ▲
-│  │ Pipeline│ │ Sync     ││              │ service-role key
-│  └────┬────┘ └────┬─────┘│              │ (server-side only)
-│       │           │      │──────────────┘
-│       ▼           ▼      │
-│   Groq API    JSearch API│
-└──────────────────────────┘
+```mermaid
+graph TD
+    Browser["Browser<br/>React + TanStack Router + Tailwind"]
+
+    subgraph Vercel ["Vercel (Frontend)"]
+        SSR["SSR / Static Assets"]
+    end
+
+    subgraph Render ["Render (Backend)"]
+        FastAPI["FastAPI /api/v1/*"]
+        AI["AI Pipeline<br/>Groq LLaMA 3.3 70B"]
+        Jobs["Jobs Sync"]
+    end
+
+    subgraph Supabase ["Supabase"]
+        Auth["Auth"]
+        DB["PostgreSQL + RLS"]
+        Storage["Storage (CVs)"]
+    end
+
+    Groq["Groq Cloud API"]
+    JSearch["JSearch API<br/>(RapidAPI)"]
+
+    Browser -- "cookie + CSRF" --> FastAPI
+    Browser -- "anon key (direct)" --> Auth
+    Browser -- "anon key (direct)" --> DB
+    FastAPI -- "service-role key" --> DB
+    FastAPI -- "service-role key" --> Storage
+    FastAPI --> AI
+    FastAPI --> Jobs
+    AI --> Groq
+    Jobs --> JSearch
+    SSR --> Browser
 ```
 
 ---
@@ -68,10 +81,11 @@ LockeIn/
 │   ├── app/api/routes/           # auth, ai, jobs, health endpoints
 │   ├── app/services/             # AI pipeline, PDF extraction, rate limiter
 │   ├── app/core/                 # Config, sanitisation
-│   └── app/models/               # Pydantic request/response schemas
+│   ├── app/models/               # Pydantic request/response schemas
+│   └── tests/                    # pytest unit tests (sanitisation, rate limiter)
 ├── supabase/migrations/          # SQL migrations (schema + RLS policies)
 ├── tests/smoke/                  # Playwright end-to-end tests
-└── docs/                         # Internal documentation
+└── docs/                         # API contract, testing guides
 ```
 
 ---
