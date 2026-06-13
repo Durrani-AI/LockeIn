@@ -52,13 +52,20 @@ export async function syncBackendSession(accessToken: string): Promise<void> {
     return;
   }
 
-  const response = await fetch(`${API_BASE_URL}/auth/session`, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/auth/session`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+  } catch {
+    throw new Error(
+      `Could not reach backend API at ${API_BASE_URL}. Ensure the backend server is running.`,
+    );
+  }
 
   const raw = await response.text();
   const parsed = parseJsonSafe(raw);
