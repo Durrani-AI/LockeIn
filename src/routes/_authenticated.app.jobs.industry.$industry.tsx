@@ -76,7 +76,7 @@ function IndustryJobsPage() {
       supabase.from("saved_jobs").select("job_id, status").eq("user_id", userId),
     ]);
 
-    const nextJobs = [...(((jobsRes.data ?? []) as JobRow[]))].sort(compareJobsByFreshness);
+    const nextJobs = [...(((jobsRes.data ?? []) as unknown as JobRow[]))].sort(compareJobsByFreshness);
     setJobs(nextJobs);
 
     const map: Record<string, string> = {};
@@ -123,9 +123,9 @@ function IndustryJobsPage() {
         }
       } catch (error) {
         if (manual) {
-          toast.error(error instanceof Error ? error.message : "JSearch sync failed");
+          toast.error(error instanceof Error ? error.message : "Sync failed");
         } else {
-          console.error("Background JSearch sync failed", error);
+          console.error("Background sync failed", error);
         }
       } finally {
         setSyncing(false);
@@ -405,7 +405,7 @@ function IndustryJobsPage() {
           </Button>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          Pull the latest roles into this industry page. Leave the query empty to use the curated {selectedIndustryDefinition.label.toLowerCase()} search bundle from the backend.
+          Get the latest roles into this industry. {selectedIndustryDefinition.syncLabel}.
         </p>
       </div>
 

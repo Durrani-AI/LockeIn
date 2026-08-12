@@ -156,8 +156,8 @@ export const INDUSTRY_DEFINITIONS: Record<Industry, IndustryDefinition> = {
     mappedCategories: ["technology"],
     matchKeywords: TECHNOLOGY_KEYWORDS,
     emptyState: "No technology roles match this mix of filters yet.",
-    syncLabel: "Refresh technology feed",
-    syncPlaceholder: "Optional query for technology roles, for example software engineer internship united kingdom",
+    syncLabel: "Refresh feed",
+    syncPlaceholder: "Optional query personalised Searches",
     tracks: [
       {
         key: "software-engineering",
