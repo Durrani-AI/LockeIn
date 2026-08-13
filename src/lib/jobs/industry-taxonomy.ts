@@ -117,7 +117,7 @@ export function statusClass(status: string | null | undefined) {
     case "Rejected":
       return "text-rose-400";
     case "Saved":
-      return "text-sky-400";
+      return "text-emerald-400";
     default:
       return "text-rose-400/80 italic";
   }

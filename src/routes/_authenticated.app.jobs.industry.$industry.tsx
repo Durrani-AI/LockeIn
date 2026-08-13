@@ -510,7 +510,7 @@ function TrackGroup({
               <Link
                 to="/app/jobs/$jobId"
                 params={{ jobId: job.id }}
-                className="font-medium text-primary hover:underline"
+                className="font-medium text-foreground hover:underline"
               >
                 {job.company}
               </Link>
