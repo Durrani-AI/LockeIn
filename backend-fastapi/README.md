@@ -1,4 +1,4 @@
-# LockeIn FastAPI Backend
+# LockedIn FastAPI Backend
 
 This service is the first implementation slice for migrating backend logic from TypeScript server functions to FastAPI.
 

@@ -1,4 +1,4 @@
-# LockeIn
+# LockedIn
 
 A full-stack career platform for UK students and graduates. Upload your CV, get AI-driven feedback on job fit, generate tailored cover letters, and browse live job listings across four industries — all from one interface.
 

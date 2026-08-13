@@ -14,7 +14,7 @@ export function SiteNav() {
           <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-border-strong bg-surface transition-colors group-hover:border-primary/60">
             <LockedInLogo className="h-6 w-6" animated />
           </span>
-          LockeIn
+          LockedIn
         </Link>
 
         <nav className="flex items-center gap-2">

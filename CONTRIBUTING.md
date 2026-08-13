@@ -1,4 +1,4 @@
-# Contributing to LockeIn
+# Contributing to LockedIn
 
 Thanks for your interest in contributing. This guide covers how to set up the project locally and the conventions we follow.
 
@@ -58,7 +58,7 @@ The Vite dev server proxies `/api/v1` to `localhost:8000` automatically.
 
 - Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `refactor:`, `chore:`, `docs:`.
 - One logical change per commit.
-- The project name is **LockeIn** (not LockedIn).
+- The project name is **LockedIn** (not LockeIn).
 
 ---
 

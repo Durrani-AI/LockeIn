@@ -1,6 +1,6 @@
 # Documentation
 
-This directory contains internal technical documentation for the LockeIn project.
+This directory contains internal technical documentation for the LockedIn project.
 
 ## Contents
 
