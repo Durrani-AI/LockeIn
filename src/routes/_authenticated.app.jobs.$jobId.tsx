@@ -265,9 +265,9 @@ function JobDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Link to="/app/jobs" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> Choose another industry
-      </Link>
+      <button onClick={() => window.history.back()} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="h-4 w-4" /> Back
+      </button>
 
       {/* Header */}
       <Card>
