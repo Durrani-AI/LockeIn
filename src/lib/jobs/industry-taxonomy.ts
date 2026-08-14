@@ -107,16 +107,16 @@ export function getPrimaryTrack(job: JobRow, industry: Industry) {
 // ── Display helpers ────────────────────────────────────────────────
 
 export function statusClass(status: string | null | undefined) {
-  switch (status) {
-    case "Application Submitted":
+  switch (status?.toLowerCase()) {
+    case "application submitted":
       return "text-emerald-400";
-    case "Interviewing":
+    case "interviewing":
       return "text-amber-400";
-    case "Offer":
+    case "offer":
       return "text-emerald-300";
-    case "Rejected":
+    case "rejected":
       return "text-rose-400";
-    case "Saved":
+    case "saved":
       return "text-emerald-400";
     default:
       return "text-rose-400/80 italic";
