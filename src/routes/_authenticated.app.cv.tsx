@@ -60,10 +60,15 @@ function CvPage() {
     }
   };
 
+  const ACCEPTED_TYPES = new Set([
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ]);
+
   const upload = async (file: File) => {
     if (!user) return;
-    if (file.type !== "application/pdf") {
-      toast.error("Please upload a PDF");
+    if (!ACCEPTED_TYPES.has(file.type)) {
+      toast.error("Please upload a PDF or Word (.docx) file");
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
@@ -80,7 +85,7 @@ function CvPage() {
 
       const path = `${user.id}/${Date.now()}-${file.name.replace(/[^\w.-]/g, "_")}`;
       const { error: upErr } = await supabase.storage.from("cvs").upload(path, file, {
-        contentType: "application/pdf",
+        contentType: file.type,
         upsert: false,
       });
       if (upErr) throw upErr;
@@ -176,14 +181,14 @@ function CvPage() {
                 disabled={uploading || parsing}
                 onClick={() => fileRef.current?.click()}
               >
-                Replace with new PDF
+                Replace with new file
               </Button>
             </CardContent>
           )}
           {!cv.extracted_text && (
             <CardContent className="space-y-4 pt-0">
               <div className="rounded-lg border border-warning/30 bg-warning/10 p-4 text-sm text-foreground">
-                AI features need the extracted text from your PDF. If an earlier parse was interrupted, retry it here.
+                AI features need the extracted text from your CV. If an earlier parse was interrupted, retry it here.
               </div>
               <div className="flex flex-wrap gap-3">
                 <Button onClick={() => void parseExistingCv(cv)} disabled={uploading || parsing}>
@@ -195,7 +200,7 @@ function CvPage() {
                   disabled={uploading || parsing}
                   onClick={() => fileRef.current?.click()}
                 >
-                  Replace with new PDF
+                  Replace with new file
                 </Button>
               </div>
             </CardContent>
@@ -218,8 +223,8 @@ function CvPage() {
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-soft text-primary">
                 <Upload className="h-5 w-5" />
               </div>
-              <div className="font-medium">Click to upload a PDF</div>
-              <div className="text-xs text-muted-foreground">Max 10 MB</div>
+              <div className="font-medium">Click to upload your CV</div>
+              <div className="text-xs text-muted-foreground">PDF or Word (.docx) · Max 10 MB</div>
             </>
           )}
         </button>
@@ -228,7 +233,7 @@ function CvPage() {
       <input
         ref={fileRef}
         type="file"
-        accept="application/pdf"
+        accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pdf,.docx"
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0];
