@@ -103,8 +103,16 @@ class SupabaseRestClient:
 
     async def download_cv_file(self, storage_path: str) -> bytes:
         encoded_path = quote(storage_path, safe="/")
-        response = await self._http.get(f"{self._storage_base}/object/cvs/{encoded_path}")
+        response = await self._http.get(f"{self._storage_base}/object/authenticated/cvs/{encoded_path}")
         self._raise_for_status(response, "Could not download CV file", 400)
+
+        content_type = response.headers.get("content-type", "")
+        if "json" in content_type or "html" in content_type:
+            raise SupabaseApiError("Storage returned unexpected content instead of file data", 502)
+
+        if len(response.content) == 0:
+            raise SupabaseApiError("Downloaded file is empty", 400)
+
         return response.content
 
     async def update_cv_text(self, cv_id: str, extracted_text: str) -> None:
