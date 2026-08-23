@@ -16,7 +16,7 @@ from app.models.schemas import (
     GenerateCoverLetterResponse,
 )
 from app.services.ai_pipeline import AiPipeline
-from app.services.cv_extractor import extract_cv_text
+from app.services.cv_extractor import extract_cv_text as parse_cv_file
 from app.services.supabase_rest import SupabaseApiError
 
 router = APIRouter(tags=["ai"])
@@ -38,7 +38,7 @@ async def _ensure_cv_text(cv: dict[str, Any], ctx: RequestContext) -> str | None
         return None
 
     file_bytes = await ctx.supabase.download_cv_file(storage_path)
-    cleaned = sanitize_text(extract_cv_text(file_bytes, storage_path), max_length=120_000)
+    cleaned = sanitize_text(parse_cv_file(file_bytes, storage_path), max_length=120_000)
     if not cleaned:
         return None
 
@@ -64,7 +64,7 @@ async def extract_cv_text(
             raise HTTPException(status_code=400, detail="Could not download CV file")
 
         file_bytes = await ctx.supabase.download_cv_file(storage_path)
-        cleaned = sanitize_text(extract_cv_text(file_bytes, storage_path), max_length=120_000)
+        cleaned = sanitize_text(parse_cv_file(file_bytes, storage_path), max_length=120_000)
         if not cleaned:
             raise HTTPException(status_code=400, detail="CV text is empty after extraction")
         await ctx.supabase.update_cv_text(str(cv.get("id")), cleaned)

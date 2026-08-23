@@ -102,12 +102,37 @@ class SupabaseRestClient:
         return rows[0] if rows else None
 
     async def download_cv_file(self, storage_path: str) -> bytes:
+        import logging
+        logger = logging.getLogger(__name__)
+
         encoded_path = quote(storage_path, safe="/")
-        response = await self._http.get(f"{self._storage_base}/object/authenticated/cvs/{encoded_path}")
+
+        # Try authenticated path first (correct for private buckets with user JWT)
+        url = f"{self._storage_base}/object/authenticated/cvs/{encoded_path}"
+        logger.info("Downloading CV: %s", url)
+        response = await self._http.get(url)
+        logger.info("Storage response: status=%d, content-type=%s, size=%d",
+                     response.status_code,
+                     response.headers.get("content-type", "unknown"),
+                     len(response.content))
+
+        # If authenticated path fails, fall back to bare path (older Supabase versions)
+        if response.status_code >= 400:
+            fallback_url = f"{self._storage_base}/object/cvs/{encoded_path}"
+            logger.info("Authenticated path failed (%d), trying fallback: %s",
+                        response.status_code, fallback_url)
+            response = await self._http.get(fallback_url)
+            logger.info("Fallback response: status=%d, content-type=%s, size=%d",
+                         response.status_code,
+                         response.headers.get("content-type", "unknown"),
+                         len(response.content))
+
         self._raise_for_status(response, "Could not download CV file", 400)
 
         content_type = response.headers.get("content-type", "")
         if "json" in content_type or "html" in content_type:
+            # Log what storage returned so we can diagnose
+            logger.error("Storage returned non-file content: %s", response.text[:500])
             raise SupabaseApiError("Storage returned unexpected content instead of file data", 502)
 
         if len(response.content) == 0:
